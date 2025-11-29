@@ -3,7 +3,6 @@
 Сервис на основе телеграмм бота, который позволяет пользователю загружать 
 изображения с автомобилями, после чего система автоматически 
 локализует номер автомобиля и распознает текст номера. 
-Сервис может использоваться в системах парковок, контроля доступа.
 
 
 ## План работы
@@ -24,7 +23,16 @@
 
 ## Список литературы
 
-- https://arxiv.org/abs/1507.05717 - статья по crnn
+1) https://arxiv.org/abs/1507.05717 - статья по crnn.
+2) https://arxiv.org/abs/1506.02640 - YOLO оригинальная статья.
+3) https://docs.ultralytics.com/ru/ - YOLO документация.
+4) https://www.cs.toronto.edu/~graves/icml_2006.pdf?spm=a2ty_o01.29997173.0.0.e8bec921VcWSsO&file=icml_2006.pdf - CTC.
+5) https://arxiv.org/abs/1809.00999?spm=a2ty_o01.29997173.0.0.e8bec921VcWSsO&file=1809.00999 - Towards Large Scale Training Of Autoencoders For
+  Collaborative Filtering.
+6) https://arxiv.org/abs/1809.08717?spm=a2ty_o01.29997173.0.0.e8bec921VcWSsO&file=1809.08717 - сравнение детекторов.
+7) https://albumentations.ai/docs/ - аугментации.
+8) https://arxiv.org/abs/2109.10282?spm=a2ty_o01.29997173.0.0.e8bec921VcWSsO&file=2109.10282 - encoder decoder для OCR.
+9) https://openaccess.thecvf.com/content_cvpr_2016/papers/Lee_Recursive_Recurrent_Nets_CVPR_2016_paper.pdf использование attention-based декодера вместо CTC.
 
 
 ## Вероятные датасеты
