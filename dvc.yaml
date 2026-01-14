@@ -1,0 +1,27 @@
+stages:
+  download_data:
+    cmd: download-data
+    deps:
+      - src/data/download.py
+      - configs/data/sources.yaml
+    outs:
+      - data/raw:
+          cache: true
+
+  preprocess_ocr:
+    cmd: python -m data.preprocess_ocr --input-dir data/raw/ocr --output-dir data/processed/ocr
+    deps:
+      - src/data/preprocess_ocr.py
+      - data/raw/ocr
+    outs:
+      - data/processed/ocr
+
+  train_ocr:
+    cmd: train-ocr
+    deps:
+      - data/processed/ocr
+      - src/models/crnn.py
+      - src/pl_modules/ocr_module.py
+    outs:
+      - outputs/ocr_model:
+          cache: true

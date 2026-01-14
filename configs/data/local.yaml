@@ -1,0 +1,7 @@
+data_dir: ${hydra:runtime.cwd}/data/processed/ocr
+train_ratio: 0.83
+val_ratio: 0.107
+test_ratio: 0.063
+img_h: 32
+img_w: 128
+alphabet: "0123456789ABEKMHOPCTYX"

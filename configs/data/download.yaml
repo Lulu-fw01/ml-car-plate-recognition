@@ -1,0 +1,12 @@
+output_dir: "data/raw"
+base_url: "https://huggingface.co/datasets/AY000554"
+repo: "AY000554"
+datasets:
+  ocr:
+    name: "Car_plate_OCR_dataset"
+    # archive_name: "archive.zip"
+    output_subdir: "ocr"
+  detect:
+    name: "Car_plate_detecting_dataset"
+    # archive_name: "archive.zip"
+    output_subdir: "detect"
