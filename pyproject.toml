@@ -32,6 +32,6 @@ dev = [
 ]
 
 [project.scripts]
-train-yolo = "anpr_bot.scripts.train_yolo:main"
-train-ocr = "anpr_bot.scripts.train_ocr:main"
-download-data = "anpr_bot.data.download:cli"
+train-yolo = "scripts.train_yolo:main"
+train-ocr = "scripts.train_ocr:main"
+download-data = "data.download:cli"
