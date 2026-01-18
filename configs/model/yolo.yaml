@@ -1,0 +1,4 @@
+yolo:
+  model_name: "yolov5s"
+  imgsz: 640
+  data_yaml: "data.yaml"
