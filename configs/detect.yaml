@@ -4,16 +4,15 @@ defaults:
 task: "detect"
 
 data:
-  output_dir: "data/raw"
-  root: "${data.output_dir}/detect"
+  path: "data/raw/detect"
 
 model:
   name: "yolov5s"
   imgsz: 640
 
 trainer:
-  max_epochs: 50
-  batch_size: 16
+  max_epochs: 10
+  batch_size: 32
   num_workers: 4
   accelerator: "auto"
   devices: "auto"

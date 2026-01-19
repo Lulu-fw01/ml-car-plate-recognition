@@ -209,3 +209,9 @@ __marimo__/
 
 /data
 /outputs
+/runs
+/mlruns
+/mlartifacts
+
+data.yaml
+yolov5su.pt
