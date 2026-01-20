@@ -1,0 +1,27 @@
+defaults:
+  - _self_
+
+task: "ocr"
+
+data:
+  path: "data/raw/ocr"
+
+model:
+  rnn_hidden: 256
+  rnn_layers: 2
+  img_h: 32
+  img_w: 128
+  alphabet: "0123456789ABEKMHOPCTYX"
+  max_length: 9
+
+trainer:
+  max_epochs: 30
+  batch_size: 32
+  num_workers: 4
+  accelerator: "auto"
+  devices: "auto"
+
+logging:
+  mlflow:
+    tracking_uri: "http://127.0.0.1:8080"
+    experiment_name: "ocr-v1"
