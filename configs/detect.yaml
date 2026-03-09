@@ -1,0 +1,23 @@
+defaults:
+  - _self_
+
+task: "detect"
+
+data:
+  path: "data/raw/detect"
+
+model:
+  name: "yolov5s"
+  imgsz: 640
+
+trainer:
+  max_epochs: 10
+  batch_size: 32
+  num_workers: 4
+  accelerator: "auto"
+  devices: "auto"
+
+logging:
+  mlflow:
+    tracking_uri: "http://127.0.0.1:8080"
+    experiment_name: "detection"

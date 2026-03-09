@@ -1,5 +1,0 @@
-defaults:
-  -  data: download
-  - _self_
-
-seed: 42
