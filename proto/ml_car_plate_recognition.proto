@@ -1,0 +1,17 @@
+syntax = "proto3";
+package ml;
+
+// IMPORTANT: Define the Go package path for the consumer
+option go_package = "github.com/ml-car-plate-recognition/proto;pb";
+
+service MLModelService {
+  rpc RecognizeCarPlate(PredictRequest) returns (PredictResponse);
+}
+
+message PredictRequest {
+  string image_link = 2;
+}
+
+message PredictResponse {
+  string prediction = 1;
+}
