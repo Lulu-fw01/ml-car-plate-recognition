@@ -32,3 +32,10 @@ python scripts/train_ocr.py
 ```bash
 python scripts/train_detect.py
 ```
+
+Вызвать распознование
+```bash
+grpcurl -plaintext \
+  -d '{"image_link": "image/link"}' \
+  localhost:50051 ml.MLCarPlateRecognitionService/RecognizeCarPlate
+```
