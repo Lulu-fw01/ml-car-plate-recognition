@@ -32,3 +32,15 @@ python scripts/train_ocr.py
 ```bash
 python scripts/train_detect.py
 ```
+
+python scripts/inference.py image_path /Users/lumarkov/Downloads/nom1.jpg --detect-path mlartifacts/218476399212749806/02a1439efc5b46c3a40277e99e7e30d6/artifacts/models/best.pt \
+  --ocr-path mlartifacts/ocr/ocr-v1-epoch=06-val_acc=0.9588.ckpt
+
+
+## Baseline
+
+### Детекция номера на изображении
+
+yolo5s
+
+### Распознование номера
