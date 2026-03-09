@@ -28,7 +28,7 @@ if _version_not_supported:
     )
 
 
-class MLModelServiceStub(object):
+class MLCarPlateRecognitionServiceStub(object):
     """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
@@ -38,14 +38,14 @@ class MLModelServiceStub(object):
             channel: A grpc.Channel.
         """
         self.RecognizeCarPlate = channel.unary_unary(
-            "/ml.MLModelService/RecognizeCarPlate",
+            "/ml.MLCarPlateRecognitionService/RecognizeCarPlate",
             request_serializer=ml__car__plate__recognition__pb2.PredictRequest.SerializeToString,
             response_deserializer=ml__car__plate__recognition__pb2.PredictResponse.FromString,
             _registered_method=True,
         )
 
 
-class MLModelServiceServicer(object):
+class MLCarPlateRecognitionServiceServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def RecognizeCarPlate(self, request, context):
@@ -55,7 +55,7 @@ class MLModelServiceServicer(object):
         raise NotImplementedError("Method not implemented!")
 
 
-def add_MLModelServiceServicer_to_server(servicer, server):
+def add_MLCarPlateRecognitionServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
         "RecognizeCarPlate": grpc.unary_unary_rpc_method_handler(
             servicer.RecognizeCarPlate,
@@ -64,14 +64,16 @@ def add_MLModelServiceServicer_to_server(servicer, server):
         ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-        "ml.MLModelService", rpc_method_handlers
+        "ml.MLCarPlateRecognitionService", rpc_method_handlers
     )
     server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers("ml.MLModelService", rpc_method_handlers)
+    server.add_registered_method_handlers(
+        "ml.MLCarPlateRecognitionService", rpc_method_handlers
+    )
 
 
 # This class is part of an EXPERIMENTAL API.
-class MLModelService(object):
+class MLCarPlateRecognitionService(object):
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
@@ -90,7 +92,7 @@ class MLModelService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            "/ml.MLModelService/RecognizeCarPlate",
+            "/ml.MLCarPlateRecognitionService/RecognizeCarPlate",
             ml__car__plate__recognition__pb2.PredictRequest.SerializeToString,
             ml__car__plate__recognition__pb2.PredictResponse.FromString,
             options,

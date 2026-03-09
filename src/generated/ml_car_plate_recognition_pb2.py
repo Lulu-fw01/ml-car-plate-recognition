@@ -20,7 +20,7 @@ _sym_db = _symbol_database.Default()
 
 
 DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(
-    b'\n\x1eml_car_plate_recognition.proto\x12\x02ml"$\n\x0ePredictRequest\x12\x12\n\nimage_link\x18\x02 \x01(\t"%\n\x0fPredictResponse\x12\x12\n\nprediction\x18\x01 \x01(\t2N\n\x0eMLModelService\x12<\n\x11RecognizeCarPlate\x12\x12.ml.PredictRequest\x1a\x13.ml.PredictResponseB.Z,github.com/ml-car-plate-recognition/proto;pbb\x06proto3'
+    b'\n\x1eml_car_plate_recognition.proto\x12\x02ml"$\n\x0ePredictRequest\x12\x12\n\nimage_link\x18\x02 \x01(\t"%\n\x0fPredictResponse\x12\x12\n\nprediction\x18\x01 \x01(\t2\\\n\x1cMLCarPlateRecognitionService\x12<\n\x11RecognizeCarPlate\x12\x12.ml.PredictRequest\x1a\x13.ml.PredictResponseB.Z,github.com/ml-car-plate-recognition/proto;pbb\x06proto3'
 )
 
 _globals = globals()
@@ -37,6 +37,6 @@ if not _descriptor._USE_C_DESCRIPTORS:
     _globals["_PREDICTREQUEST"]._serialized_end = 74
     _globals["_PREDICTRESPONSE"]._serialized_start = 76
     _globals["_PREDICTRESPONSE"]._serialized_end = 113
-    _globals["_MLMODELSERVICE"]._serialized_start = 115
-    _globals["_MLMODELSERVICE"]._serialized_end = 193
+    _globals["_MLCARPLATERECOGNITIONSERVICE"]._serialized_start = 115
+    _globals["_MLCARPLATERECOGNITIONSERVICE"]._serialized_end = 207
 # @@protoc_insertion_point(module_scope)
