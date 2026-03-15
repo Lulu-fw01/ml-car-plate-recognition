@@ -11,3 +11,7 @@ gen:
 gen-go:
 	mkdir -p clients/go/pb
 	protoc --go_out=./clients/go/pb --go_opt=paths=source_relative --go-grpc_out=./clients/go/pb --go-grpc_opt=paths=source_relative -I proto proto/ml_car_plate_recognition.proto
+
+
+run-app:
+	uv run ./src/server.py

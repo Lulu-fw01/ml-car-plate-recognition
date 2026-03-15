@@ -36,7 +36,7 @@ class MLServicer(
 
     def RecognizeCarPlate(self, request, context):
         try:
-            logging.debug(f"image link: {request.image_link}")
+            logging.debug("got request")
 
             # prediction, confidence = self.model.predict(request.input_text)
 
