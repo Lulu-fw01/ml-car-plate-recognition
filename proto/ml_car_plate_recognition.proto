@@ -1,7 +1,6 @@
 syntax = "proto3";
 package ml;
 
-// IMPORTANT: Define the Go package path for the consumer
 option go_package = "github.com/ml-car-plate-recognition/proto;pb";
 
 service MLCarPlateRecognitionService {
@@ -9,9 +8,10 @@ service MLCarPlateRecognitionService {
 }
 
 message PredictRequest {
-  string image_link = 2;
+  bytes image_data = 1;
 }
 
 message PredictResponse {
-  string prediction = 1;
+  string plate_number = 1;
+  float confidence = 2;
 }

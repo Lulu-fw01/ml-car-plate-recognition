@@ -23,7 +23,7 @@ const (
 
 type PredictRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ImageLink     string                 `protobuf:"bytes,2,opt,name=image_link,json=imageLink,proto3" json:"image_link,omitempty"`
+	ImageData     []byte                 `protobuf:"bytes,1,opt,name=image_data,json=imageData,proto3" json:"image_data,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -58,16 +58,17 @@ func (*PredictRequest) Descriptor() ([]byte, []int) {
 	return file_ml_car_plate_recognition_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *PredictRequest) GetImageLink() string {
+func (x *PredictRequest) GetImageData() []byte {
 	if x != nil {
-		return x.ImageLink
+		return x.ImageData
 	}
-	return ""
+	return nil
 }
 
 type PredictResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Prediction    string                 `protobuf:"bytes,1,opt,name=prediction,proto3" json:"prediction,omitempty"`
+	PlateNumber   string                 `protobuf:"bytes,1,opt,name=plate_number,json=plateNumber,proto3" json:"plate_number,omitempty"`
+	Confidence    float32                `protobuf:"fixed32,2,opt,name=confidence,proto3" json:"confidence,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -102,11 +103,18 @@ func (*PredictResponse) Descriptor() ([]byte, []int) {
 	return file_ml_car_plate_recognition_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *PredictResponse) GetPrediction() string {
+func (x *PredictResponse) GetPlateNumber() string {
 	if x != nil {
-		return x.Prediction
+		return x.PlateNumber
 	}
 	return ""
+}
+
+func (x *PredictResponse) GetConfidence() float32 {
+	if x != nil {
+		return x.Confidence
+	}
+	return 0
 }
 
 var File_ml_car_plate_recognition_proto protoreflect.FileDescriptor
@@ -116,11 +124,12 @@ const file_ml_car_plate_recognition_proto_rawDesc = "" +
 	"\x1eml_car_plate_recognition.proto\x12\x02ml\"/\n" +
 	"\x0ePredictRequest\x12\x1d\n" +
 	"\n" +
-	"image_link\x18\x02 \x01(\tR\timageLink\"1\n" +
-	"\x0fPredictResponse\x12\x1e\n" +
+	"image_data\x18\x01 \x01(\fR\timageData\"T\n" +
+	"\x0fPredictResponse\x12!\n" +
+	"\fplate_number\x18\x01 \x01(\tR\vplateNumber\x12\x1e\n" +
 	"\n" +
-	"prediction\x18\x01 \x01(\tR\n" +
-	"prediction2\\\n" +
+	"confidence\x18\x02 \x01(\x02R\n" +
+	"confidence2\\\n" +
 	"\x1cMLCarPlateRecognitionService\x12<\n" +
 	"\x11RecognizeCarPlate\x12\x12.ml.PredictRequest\x1a\x13.ml.PredictResponseB.Z,github.com/ml-car-plate-recognition/proto;pbb\x06proto3"
 

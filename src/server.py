@@ -43,12 +43,12 @@ class MLServicer(
             # logging.info(f" Sending response: {prediction} ({confidence:.2f})")
 
             return ml_car_plate_recognition_pb2.PredictResponse(
-                prediction="AAAAAAAA",
+                plate_number="AAAAAAAA", confidence=1.0
             )
         except Exception as e:
             logging.error(f" Inference error: {e}")
             return ml_car_plate_recognition_pb2.PredictResponse(
-                prediction="",
+                plate_number="", confidence=0.0
             )
 
 
