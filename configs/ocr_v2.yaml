@@ -1,0 +1,33 @@
+defaults:
+  - _self_
+
+task: "ocr_v2"
+
+data:
+  path: "data/raw/ocr"
+  img_h: 32
+  img_w: 128
+
+model:
+  num_classes: 23
+  hidden_size: 256
+  num_lstm_layers: 2
+
+trainer:
+  max_epochs: 50
+  batch_size: 64
+  lr: 0.001
+  num_workers: 4
+  accelerator: "auto"
+  devices: "auto"
+
+ocr:
+  img_h: 32
+  img_w: 128
+  alphabet: "0123456789ABEKMHOPCTYX_"
+  blank_idx: 22
+
+logging:
+  mlflow:
+    tracking_uri: "http://127.0.0.1:8080"
+    experiment_name: "ocr-v2"
