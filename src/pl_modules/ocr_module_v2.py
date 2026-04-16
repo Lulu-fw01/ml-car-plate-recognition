@@ -50,7 +50,7 @@ class OCRModuleV2(pl.LightningModule):
 
         loss = self.ctc_loss(log_probs, targets, input_lengths, target_lengths)
         decoded = self.decode_greedy(log_probs)
-        cer = jiwer.cer(texts, decoded)
+        cer = jiwer.cer(list(texts), list(decoded))
 
         self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True)
         self.log("train_cer", cer, on_step=True, on_epoch=True, prog_bar=True)
@@ -61,8 +61,9 @@ class OCRModuleV2(pl.LightningModule):
         logits = self.model(images)
         log_probs = F.log_softmax(logits, dim=-1)
         decoded = self.decode_greedy(log_probs)
-        cer = jiwer.cer(texts, decoded)
+        cer = jiwer.cer(list(texts), list(decoded))
 
+        # todo add val_loss
         self.log("val_cer", cer, prog_bar=True, sync_dist=True)
         return {"val_cer": cer}
 

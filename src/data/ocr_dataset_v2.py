@@ -18,6 +18,7 @@ class OCRDatasetV2(torch.utils.data.Dataset):
                 transforms.Normalize(mean=[0.5], std=[0.5]),
             ]
         )
+        # data
         # transforms.Compose([
         #     transforms.Grayscale(),
         #     transforms.RandomAffine(degrees=5, translate=(0.05, 0.05), scale=(0.9, 1.1)),
