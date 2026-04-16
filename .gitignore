@@ -212,6 +212,7 @@ __marimo__/
 /runs
 /mlruns
 /mlartifacts
+/debug_images
 
 data.yaml
 yolov5su.pt
