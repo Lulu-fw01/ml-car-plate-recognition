@@ -9,6 +9,7 @@ dependencies = [
     "grpcio-tools>=1.78.0",
     "jiwer>=4.0.0",
     "rapidfuzz>=3.13.0",
+    "scikit-learn>=1.6.1",
 ]
 
 [build-system]
