@@ -10,6 +10,7 @@ dependencies = [
     "jiwer>=4.0.0",
     "rapidfuzz>=3.13.0",
     "scikit-learn>=1.6.1",
+    "seaborn>=0.13.2",
 ]
 
 [build-system]

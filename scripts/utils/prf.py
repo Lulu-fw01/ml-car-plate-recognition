@@ -7,8 +7,16 @@ def calculate_prf(predictions: list[str], targets: list[str]) -> dict:
     for pred, target in zip(predictions, targets):
         # Получаем правки: (substitutions, deletions, insertions)
         # s1=target, s2=pred (чтобы d было удалением из оригинала, а i - лишним в предсказании)
-        edit = Levenshtein.editops(target, pred)
-        s, d, i = edit.count("replace"), edit.count("delete"), edit.count("insert")
+        ops = Levenshtein.editops(target, pred)
+
+        s, d, i = 0, 0, 0
+        for op in ops:
+            if op.tag == "replace":
+                s += 1
+            elif op.tag == "delete":
+                d += 1
+            elif op.tag == "insert":
+                i += 1
 
         # Математика для OCR:
         # Совпавшие символы (TP) = Длина оригинала - Удаления - Замены
