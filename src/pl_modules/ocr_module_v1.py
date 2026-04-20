@@ -9,12 +9,12 @@ class OCRModuleV1(pl.LightningModule):
     def __init__(self, config):
         super().__init__()
         self.save_hyperparameters()
-        alphabet_len = len(config.model.alphabet) + 1
+        alphabet_len = len(config.model.alphabet)
         self.model = OCRv1(
             num_chars=alphabet_len,
             max_length=config.model.max_length,
         )
-        self.pad_idx = len(config.model.alphabet)
+        self.pad_idx = len(config.model.alphabet) - 1
         self.train_acc = Accuracy(
             task="multiclass", num_classes=alphabet_len, ignore_index=self.pad_idx
         )
@@ -28,7 +28,7 @@ class OCRModuleV1(pl.LightningModule):
         loss = F.cross_entropy(
             logits.permute(0, 2, 1),  # (B, 23, 9)
             targets,
-            ignore_index=self.pad_idx,
+            # ignore_index=self.pad_idx,
         )
         preds = logits.argmax(dim=-1)  # (B, 9)
         self.train_acc(preds, targets)
@@ -41,7 +41,9 @@ class OCRModuleV1(pl.LightningModule):
         images, targets = batch
         logits = self.model(images)
         loss = F.cross_entropy(
-            logits.permute(0, 2, 1), targets, ignore_index=self.pad_idx
+            logits.permute(0, 2, 1),
+            targets,
+            # ignore_index=self.pad_idx
         )
         preds = logits.argmax(dim=-1)
         self.val_acc(preds, targets)

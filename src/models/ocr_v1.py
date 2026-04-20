@@ -2,10 +2,11 @@ import torch.nn as nn
 
 
 class OCRv1(nn.Module):
-    def __init__(self, num_chars=22, max_length=9):
+    def __init__(self, num_chars=23, max_length=9):
         super().__init__()
         self.max_length = max_length
         self.num_chars = num_chars
+        self.pad_token = num_chars - 1
 
         self.cnn = nn.Sequential(
             nn.Conv2d(

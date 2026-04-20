@@ -6,6 +6,7 @@ import torch
 from ultralytics import YOLO
 from PIL import Image
 from torchvision import transforms
+import matplotlib.pyplot as plt
 
 from pl_modules.ocr_module_v1 import OCRModuleV1
 
@@ -61,6 +62,19 @@ def prepare_for_ocr(pil_image, img_h=32, img_w=128):
 def recognize_text(ocr_model, tensor):
     with torch.no_grad():
         logits = ocr_model.model(tensor)  # (1, 9, 23)
+
+        activations = ocr_model.model.cnn[:-1](tensor)  # (1, 128, H/4, W/4)
+        print(f"Shape: {activations.shape}")  # Должно быть (1, 128, ~6, ~24)
+
+        # Усредняем по каналам (dim=1), чтобы получить 2D карту
+        # (1, 128, H, W) -> (1, H, W)
+        feature_map = activations[0].mean(dim=0)  # (H/4, W/4)
+        plt.figure(figsize=(10, 4))
+        plt.imshow(feature_map.detach().cpu(), cmap="hot", aspect="auto")
+        plt.title("Feature Map (before AdaptiveAvgPool)")
+        plt.colorbar(label="Activation")
+        plt.show()
+
         preds = logits.argmax(dim=-1).squeeze()  # (9,)
     text = "".join(ALPHABET[i] for i in preds if i != PAD_IDX)
     return text

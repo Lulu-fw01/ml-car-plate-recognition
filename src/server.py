@@ -84,20 +84,20 @@ class MLServicer(
 
         with torch.no_grad():
             logits = self.ocr_model.model(tensor)
-            probs = F.softmax(logits, dim=-1)
             preds = logits.argmax(dim=-1).squeeze()
+            max_probs = F.softmax(logits, dim=-1).max(dim=-1).values.squeeze(0)
 
         chars = []
         confidences = []
         for i, idx in enumerate(preds):
             idx_item = idx.item()
             if idx_item == self.pad_idx:
-                break
+                continue
             chars.append(self.alphabet[idx_item])
-            confidences.append(probs[0, i, idx_item].item())
+            confidences.append(max_probs[i].item())
 
         plate_text = "".join(chars)
-        avg_confidence = np.mean(confidences) if confidences else 0.0
+        avg_confidence = float(np.mean(confidences)) if confidences else 0.0
 
         return plate_text, avg_confidence
 

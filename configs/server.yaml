@@ -9,7 +9,7 @@ ocr:
   img_h: 32
   img_w: 128
   alphabet: "0123456789ABEKMHOPCTYX_"
-  pad_idx: 21
+  pad_idx: 22
 
 detection:
   conf_threshold: 0.1

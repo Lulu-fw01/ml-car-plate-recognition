@@ -19,7 +19,8 @@ class OCRDataset(torch.utils.data.Dataset):
                 transforms.Normalize(mean=[0.5], std=[0.5]),
             ]
         )
-        self.char_to_idx = {ch: i for i, ch in enumerate(alphabet + PAD_TOKEN)}
+        self.char_to_idx = {ch: i for i, ch in enumerate(alphabet)}
+        self.pad_idx = len(alphabet) - 1
 
     def __len__(self):
         return len(self.img_paths)
