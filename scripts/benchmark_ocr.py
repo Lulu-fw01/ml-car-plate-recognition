@@ -23,10 +23,11 @@ from pl_modules.ocr_module_v2 import OCRModuleV2
 
 ALPHABET = "0123456789ABEKMHOPCTYX_"
 LABELS = list(ALPHABET) + ["<DEL>", "<INS>"]
-PAD_IDX = len(ALPHABET) - 1
+BLANK_IDX = len(ALPHABET) - 1
 
-MODEL_V1_PATH = "mlartifacts/ocr/ocr-v1-epoch=06-val_acc=0.9588.ckpt"
-MODEL_V2_PATH = "mlartifacts/ocr_v2/crnn-epoch=10-val_cer=0.0202.ckpt"
+MODEL_V1_PATH = "mlartifacts/ocr/ocr-v1-epoch=04-val_acc=0.9583.ckpt"
+# MODEL_V2_PATH = "mlartifacts/ocr_v2/crnn-epoch=11-val_cer=0.0240.ckpt"
+MODEL_V2_PATH = "mlartifacts/ocr_v2/crnn-epoch=13-val_cer=0.0240.ckpt"
 TEST_DIR = "data/raw/ocr/test/img"
 IMG_H = 32
 IMG_W = 128
@@ -39,10 +40,21 @@ class OCRBenchmark:
         self.test_dir = Path(test_dir)
         self.img_paths = sorted(self.test_dir.glob("*.png"))
 
-        self.transform = transforms.Compose(
+        self.transform_v1 = transforms.Compose(
             [
                 transforms.Grayscale(),
                 transforms.Resize((IMG_H, IMG_W)),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=[0.5], std=[0.5]),
+            ]
+        )
+        self.transform_v2 = transforms.Compose(
+            [
+                transforms.Grayscale(),
+                transforms.Pad((10, 0, 10, 0), fill=255),
+                transforms.Resize(
+                    (48, 160), interpolation=transforms.InterpolationMode.BILINEAR
+                ),  # фиксация размера
                 transforms.ToTensor(),
                 transforms.Normalize(mean=[0.5], std=[0.5]),
             ]
@@ -56,17 +68,18 @@ class OCRBenchmark:
         self.model_v1 = OCRModuleV1.load_from_checkpoint(
             self.model_v1_path, map_location=self.device, weights_only=False
         )
-        self.model_v1.eval()
         print(f"OCR v1 model loaded from {self.model_v1_path}")
 
     def load_model_v2(self):
         self.model_v2 = OCRModuleV2.load_from_checkpoint(
             self.model_v2_path, map_location=self.device, weights_only=False
         )
-        self.model_v2.eval()
         print(f"OCR v2 model loaded {self.model_v2_path}")
 
     def predict_v1(self, tensor: torch.Tensor) -> str:
+        self.model_v1.eval()
+        device = next(self.model_v1.parameters()).device
+        tensor = tensor.to(device)
         with torch.no_grad():
             logits = self.model_v1.model(tensor)
             preds = logits.argmax(dim=-1).squeeze()
@@ -74,7 +87,7 @@ class OCRBenchmark:
         chars = []
         for idx in preds:
             idx_item = idx.item()
-            if idx_item == PAD_IDX:
+            if idx_item == BLANK_IDX:
                 break
             if idx_item < len(ALPHABET):
                 chars.append(ALPHABET[idx_item])
@@ -82,19 +95,20 @@ class OCRBenchmark:
         return "".join(chars)
 
     def predict_v2(self, tensor: torch.Tensor) -> str:
+        self.model_v2.eval()
+        device = next(self.model_v2.parameters()).device
+        tensor = tensor.to(device)
+
         with torch.no_grad():
             logits = self.model_v2(tensor)
-            preds = logits.argmax(dim=-1)
-
-        if preds.ndim > 1:
-            preds = preds[:, 0]
+            preds = logits.argmax(dim=-1).squeeze()
 
         chars = []
         prev = -1
 
         for idx in preds:
             idx_item = idx.item()
-            if idx_item != prev and idx_item != PAD_IDX:
+            if idx_item != prev and idx_item != BLANK_IDX:
                 if idx_item < len(ALPHABET):
                     chars.append(ALPHABET[idx_item])
             prev = idx_item
@@ -103,6 +117,7 @@ class OCRBenchmark:
 
     def benchmark_model(self, model_name: str) -> dict:
         predict_fn = self.predict_v1 if model_name == "v1" else self.predict_v2
+        transform_fn = self.transform_v1 if model_name == "v1" else self.transform_v2
 
         predictions = []
         ground_truths = []
@@ -116,7 +131,7 @@ class OCRBenchmark:
 
         for i in range(min(10, len(self.img_paths))):
             img = Image.open(self.img_paths[i]).convert("L")
-            tensor = self.transform(img).unsqueeze(0)
+            tensor = transform_fn(img).unsqueeze(0)
             predict_fn(tensor)
 
         print(f"Benchmarking {model_name} on {len(self.img_paths)} images")
@@ -124,7 +139,7 @@ class OCRBenchmark:
 
         for img_path in tqdm(self.img_paths, desc=f"Running {model_name}"):
             img = Image.open(img_path).convert("L")
-            tensor = self.transform(img).unsqueeze(0)
+            tensor = transform_fn(img).unsqueeze(0)
 
             pred = predict_fn(tensor)
             target = img_path.stem.upper()
