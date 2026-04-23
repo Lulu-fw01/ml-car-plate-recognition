@@ -30,42 +30,88 @@ class OCRModuleV2(pl.LightningModule):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.model(x)
 
+    # def training_step(self, batch, batch_idx):
+    #     images, texts = batch
+    #     logits = self.model(images)
+    #     log_probs = F.log_softmax(logits, dim=-1)
+    #     T, B, _ = logits.shape
+
+    #     input_lengths = torch.full((B,), T, dtype=torch.long)
+    #     targets, target_lengths = [], []
+    #     for text in texts:
+    #         target = [self.alphabet.index(c) for c in text if c in self.alphabet]
+    #         targets.extend(target)
+    #         target_lengths.append(len(target))
+
+    #     targets = torch.tensor(targets, dtype=torch.long, device=logits.device)
+    #     target_lengths = torch.tensor(
+    #         target_lengths, dtype=torch.long, device=logits.device
+    #     )
+
+    #     loss = self.ctc_loss(log_probs, targets, input_lengths, target_lengths)
+    #     decoded = self.decode_greedy(log_probs)
+    #     cer = jiwer.cer(list(texts), list(decoded))
+
+    #     self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True)
+    #     self.log("train_cer", cer, on_step=True, on_epoch=True, prog_bar=True)
+    #     return loss
+
     def training_step(self, batch, batch_idx):
         images, texts = batch
-        logits = self.model(images)
+        logits = self.forward(images)
         log_probs = F.log_softmax(logits, dim=-1)
         T, B, _ = logits.shape
 
-        input_lengths = torch.full((B,), T, dtype=torch.long)
-        targets, target_lengths = [], []
-        for text in texts:
-            target = [self.alphabet.index(c) for c in text if c in self.alphabet]
-            targets.extend(target)
-            target_lengths.append(len(target))
+        input_lengths = torch.full((B,), T, dtype=torch.long, device=self.device)
 
-        targets = torch.tensor(targets, dtype=torch.long, device=logits.device)
+        targets_list = []
+        target_lengths_list = []
+        for text in texts:
+            t = [self.alphabet.index(c) for c in text if c in self.alphabet]
+            targets_list.extend(t)
+            target_lengths_list.append(len(t))
+
+        targets = torch.tensor(targets_list, dtype=torch.long, device=self.device)
         target_lengths = torch.tensor(
-            target_lengths, dtype=torch.long, device=logits.device
+            target_lengths_list, dtype=torch.long, device=self.device
         )
 
         loss = self.ctc_loss(log_probs, targets, input_lengths, target_lengths)
-        decoded = self.decode_greedy(log_probs)
-        cer = jiwer.cer(list(texts), list(decoded))
 
-        self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True)
-        self.log("train_cer", cer, on_step=True, on_epoch=True, prog_bar=True)
+        if batch_idx % 100 == 0:
+            decoded = self.decode_greedy(log_probs)
+            cer = jiwer.cer(list(texts), list(decoded))
+            self.log("train_cer", cer, prog_bar=True, batch_size=len(texts))
+
+        self.log("train_loss", loss, prog_bar=True, batch_size=len(texts))
         return loss
 
     def validation_step(self, batch, batch_idx):
         images, texts = batch
         logits = self.model(images)
         log_probs = F.log_softmax(logits, dim=-1)
+        T, B, _ = logits.shape
+
+        input_lengths = torch.full((B,), T, dtype=torch.long, device=self.device)
+        targets_list, target_lengths_list = [], []
+        for text in texts:
+            t = [self.alphabet.index(c) for c in text if c in self.alphabet]
+            targets_list.extend(t)
+            target_lengths_list.append(len(t))
+
+        targets = torch.tensor(targets_list, dtype=torch.long, device=self.device)
+        target_lengths = torch.tensor(
+            target_lengths_list, dtype=torch.long, device=self.device
+        )
+
+        loss = self.ctc_loss(log_probs, targets, input_lengths, target_lengths)
+
         decoded = self.decode_greedy(log_probs)
         cer = jiwer.cer(list(texts), list(decoded))
 
-        # todo add val_loss
-        self.log("val_cer", cer, prog_bar=True, sync_dist=True)
-        return {"val_cer": cer}
+        self.log("val_loss", loss, prog_bar=True, sync_dist=True, batch_size=len(texts))
+        self.log("val_cer", cer, prog_bar=True, sync_dist=True, batch_size=len(texts))
+        return {"val_cer": cer, "val_loss": loss}
 
     def decode_greedy(self, logits: torch.Tensor) -> list[str]:
         decoded_texts = []
@@ -86,10 +132,20 @@ class OCRModuleV2(pl.LightningModule):
 
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(
-            self.parameters(), lr=self.hparams.config.trainer.lr, weight_decay=1e-4
+            self.parameters(), lr=self.hparams.config.trainer.lr, weight_decay=1e-3
         )
-        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-            optimizer, T_max=self.hparams.config.trainer.max_epochs
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            optimizer,
+            mode="min",
+            factor=0.2,
+            patience=5,
         )
-        return [optimizer], [{"scheduler": scheduler, "interval": "epoch"}]
-        # return torch.optim.Adam(self.parameters(), lr=self.hparams.config.trainer.lr)
+        return {
+            "optimizer": optimizer,
+            "lr_scheduler": {
+                "scheduler": scheduler,
+                "monitor": "val_cer",
+                "interval": "epoch",
+                "frequency": 1,
+            },
+        }

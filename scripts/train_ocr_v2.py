@@ -10,6 +10,7 @@ from omegaconf import DictConfig
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers import MLFlowLogger
 from pytorch_lightning.callbacks import ModelCheckpoint
+from pytorch_lightning.callbacks import EarlyStopping
 
 import sys
 
@@ -25,6 +26,12 @@ else:
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
+def ocr_collate_fn(batch):
+    images = torch.stack([item[0] for item in batch])
+    texts = [item[1] for item in batch]
+    return images, texts
+
+
 @hydra.main(config_path="../configs", config_name="ocr_v2", version_base="1.3")
 def main(cfg: DictConfig):
     train_ds = OCRDatasetV2(
@@ -32,24 +39,31 @@ def main(cfg: DictConfig):
         alphabet=cfg.ocr.alphabet,
         img_h=cfg.data.img_h,
         img_w=cfg.data.img_w,
+        is_train=True,
     )
     val_ds = OCRDatasetV2(
         root_dir=f"{cfg.data.path}/val/img",
         alphabet=cfg.ocr.alphabet,
         img_h=cfg.data.img_h,
         img_w=cfg.data.img_w,
+        is_train=False,
     )
 
     train_loader = torch.utils.data.DataLoader(
         train_ds,
         batch_size=cfg.trainer.batch_size,
-        num_workers=cfg.trainer.num_workers,
         shuffle=True,
+        num_workers=cfg.trainer.num_workers,
+        collate_fn=ocr_collate_fn,
+        pin_memory=True,
     )
     val_loader = torch.utils.data.DataLoader(
         val_ds,
         batch_size=cfg.trainer.batch_size,
+        shuffle=False,
         num_workers=cfg.trainer.num_workers,
+        collate_fn=ocr_collate_fn,
+        pin_memory=True,
     )
 
     model = OCRModuleV2(cfg)
@@ -75,9 +89,13 @@ def main(cfg: DictConfig):
     #     accelerator=device,
     #     devices=1,
     # )
+
+    early_stop_callback = EarlyStopping(
+        monitor="val_cer", patience=5, mode="min", verbose=True
+    )
     trainer = Trainer(
         logger=mlf_logger,
-        callbacks=[checkpoint_callback],
+        callbacks=[checkpoint_callback, early_stop_callback],
         max_epochs=cfg.trainer.max_epochs,
         accelerator="auto",
         devices=1,

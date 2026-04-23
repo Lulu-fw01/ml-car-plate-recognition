@@ -5,29 +5,57 @@ from torchvision import transforms
 
 
 class OCRDatasetV2(torch.utils.data.Dataset):
-    def __init__(self, root_dir: str, alphabet: str, img_h: int = 32, img_w: int = 128):
+    def __init__(
+        self,
+        root_dir: str,
+        alphabet: str,
+        img_h: int = 48,
+        img_w: int = 160,
+        is_train: bool = True,
+    ):
         self.root = Path(root_dir)
         self.img_paths = sorted(self.root.glob("*.png"))
         self.alphabet = alphabet
 
-        self.transform = transforms.Compose(
+        self.is_train = is_train
+
+        val_transform = transforms.Compose(
             [
                 transforms.Grayscale(),
-                transforms.Resize((img_h, img_w)),  # фиксация размера
+                transforms.Pad((10, 0, 10, 0), fill=255),
+                transforms.Resize(
+                    (img_h, img_w), interpolation=transforms.InterpolationMode.BILINEAR
+                ),  # фиксация размера
                 transforms.ToTensor(),
                 transforms.Normalize(mean=[0.5], std=[0.5]),
             ]
         )
-        # data
-        # transforms.Compose([
-        #     transforms.Grayscale(),
-        #     transforms.RandomAffine(degrees=5, translate=(0.05, 0.05), scale=(0.9, 1.1)),
-        #     transforms.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0)),
-        #     transforms.ColorJitter(brightness=0.3, contrast=0.3),
-        #     transforms.Resize((32, 160)), # Увеличил ширину
-        #     transforms.ToTensor(),
-        #     transforms.Normalize([0.5], [0.5])
-        # ])
+
+        train_transform = transforms.Compose(
+            [
+                transforms.Grayscale(),
+                transforms.Pad((10, 0, 10, 0), fill=255),
+                transforms.RandomAffine(
+                    degrees=3,
+                    translate=(0.03, 0.03),
+                    scale=(0.92, 1.08),
+                    shear=1.5,
+                    fill=255,
+                ),
+                transforms.ColorJitter(
+                    brightness=0.25,
+                    contrast=0.25,
+                ),
+                transforms.GaussianBlur(kernel_size=3, sigma=(0.1, 1.5)),
+                transforms.Resize(
+                    (img_h, img_w), interpolation=transforms.InterpolationMode.BILINEAR
+                ),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=[0.5], std=[0.5]),
+            ]
+        )
+
+        self.transform = train_transform if is_train else val_transform
 
     def __len__(self):
         return len(self.img_paths)

@@ -5,8 +5,8 @@ task: "ocr_v2"
 
 data:
   path: "data/raw/ocr"
-  img_h: 32
-  img_w: 128
+  img_h: 48
+  img_w: 160
 
 model:
   num_classes: 23
@@ -22,8 +22,6 @@ trainer:
   devices: "auto"
 
 ocr:
-  img_h: 32
-  img_w: 128
   alphabet: "0123456789ABEKMHOPCTYX_"
   blank_idx: 22
 
