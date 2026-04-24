@@ -13,16 +13,21 @@ class ResNet34CRNN(nn.Module):
         resnet = resnet34(weights=ResNet34_Weights.DEFAULT)
         self.conv1 = nn.Conv2d(
             1, 64, kernel_size=3, stride=1, padding=1, bias=False
-        )  # cсверточный слой
-        self.bn1 = resnet.bn1  # норм
+        )  # cверточный слой
+        # self.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False) # cверточный слой
+        # self.bn1 = resnet.bn1  # норм
+        self.bn1 = nn.BatchNorm2d(64, dtype=torch.float32)
         self.relu = resnet.relu
         self.maxpool = resnet.maxpool
+
+        # with torch.no_grad():
+        #     w = resnet.conv1.weight
+        #     self.conv1.weight.copy_(w.mean(dim=1, keepdim=True))
 
         self.layer1 = resnet.layer1
         self.layer2 = resnet.layer2
         self.layer3 = resnet.layer3
         self.layer4 = resnet.layer4
-
         self._fix_stride(self.layer3, stride=(2, 1))
         self._fix_stride(self.layer4, stride=(2, 1))
 
@@ -76,8 +81,8 @@ class ResNet34CRNN(nn.Module):
 
         x = self.projection(x)
 
-        seq_len = x.size(1)
-        x = x + self.pos_encoding[:, :seq_len, :]
+        # seq_len = x.size(1)
+        # x = x + self.pos_encoding[:, :seq_len, :]
 
         x = self.dropout(x)
         x, _ = self.lstm(x)

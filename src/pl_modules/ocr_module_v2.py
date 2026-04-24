@@ -30,32 +30,6 @@ class OCRModuleV2(pl.LightningModule):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.model(x)
 
-    # def training_step(self, batch, batch_idx):
-    #     images, texts = batch
-    #     logits = self.model(images)
-    #     log_probs = F.log_softmax(logits, dim=-1)
-    #     T, B, _ = logits.shape
-
-    #     input_lengths = torch.full((B,), T, dtype=torch.long)
-    #     targets, target_lengths = [], []
-    #     for text in texts:
-    #         target = [self.alphabet.index(c) for c in text if c in self.alphabet]
-    #         targets.extend(target)
-    #         target_lengths.append(len(target))
-
-    #     targets = torch.tensor(targets, dtype=torch.long, device=logits.device)
-    #     target_lengths = torch.tensor(
-    #         target_lengths, dtype=torch.long, device=logits.device
-    #     )
-
-    #     loss = self.ctc_loss(log_probs, targets, input_lengths, target_lengths)
-    #     decoded = self.decode_greedy(log_probs)
-    #     cer = jiwer.cer(list(texts), list(decoded))
-
-    #     self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True)
-    #     self.log("train_cer", cer, on_step=True, on_epoch=True, prog_bar=True)
-    #     return loss
-
     def training_step(self, batch, batch_idx):
         images, texts = batch
         logits = self.forward(images)
@@ -75,6 +49,14 @@ class OCRModuleV2(pl.LightningModule):
         target_lengths = torch.tensor(
             target_lengths_list, dtype=torch.long, device=self.device
         )
+
+        # target_weights = torch.ones_like(targets)
+        # confusion_pairs = {self.alphabet.index('Y'): 1.5, self.alphabet.index('H'): 1.5,
+        #                 self.alphabet.index('X'): 1.5, self.alphabet.index('A'): 1.5}
+
+        # for idx, char_idx in enumerate(targets):
+        #     if char_idx.item() in confusion_pairs:
+        #         target_weights[idx] = confusion_pairs[char_idx.item()]
 
         loss = self.ctc_loss(log_probs, targets, input_lengths, target_lengths)
 

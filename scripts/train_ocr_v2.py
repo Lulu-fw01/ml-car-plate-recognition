@@ -100,7 +100,7 @@ def main(cfg: DictConfig):
         accelerator="auto",
         devices=1,
         gradient_clip_val=5.0,
-        precision="16-mixed",
+        # precision="16-mixed",
     )
 
     trainer.fit(model, train_loader, val_loader)

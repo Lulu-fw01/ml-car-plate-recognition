@@ -5,7 +5,7 @@ task: "ocr_v2"
 
 data:
   path: "data/raw/ocr"
-  img_h: 48
+  img_h: 64
   img_w: 160
 
 model:

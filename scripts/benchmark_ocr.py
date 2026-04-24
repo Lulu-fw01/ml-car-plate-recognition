@@ -27,7 +27,8 @@ BLANK_IDX = len(ALPHABET) - 1
 
 MODEL_V1_PATH = "mlartifacts/ocr/ocr-v1-epoch=04-val_acc=0.9583.ckpt"
 # MODEL_V2_PATH = "mlartifacts/ocr_v2/crnn-epoch=11-val_cer=0.0240.ckpt"
-MODEL_V2_PATH = "mlartifacts/ocr_v2/crnn-epoch=13-val_cer=0.0240.ckpt"
+# MODEL_V2_PATH = "mlartifacts/ocr_v2/crnn-epoch=13-val_cer=0.0240.ckpt"
+MODEL_V2_PATH = "mlartifacts/ocr_v2/crnn-epoch=06-val_cer=0.0219.ckpt"
 TEST_DIR = "data/raw/ocr/test/img"
 IMG_H = 32
 IMG_W = 128
@@ -51,9 +52,8 @@ class OCRBenchmark:
         self.transform_v2 = transforms.Compose(
             [
                 transforms.Grayscale(),
-                transforms.Pad((10, 0, 10, 0), fill=255),
                 transforms.Resize(
-                    (48, 160), interpolation=transforms.InterpolationMode.BILINEAR
+                    (64, 160), interpolation=transforms.InterpolationMode.BILINEAR
                 ),  # фиксация размера
                 transforms.ToTensor(),
                 transforms.Normalize(mean=[0.5], std=[0.5]),
