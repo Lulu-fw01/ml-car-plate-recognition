@@ -25,10 +25,35 @@ class OCRModuleV2(pl.LightningModule):
         self.ctc_loss = nn.CTCLoss(
             blank=self.blank_idx, reduction="mean", zero_infinity=True
         )
+        self.label_smoothing = 0.1
         self.val_cer = CharErrorRate()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.model(x)
+
+    def _label_smoothing_loss(self, log_probs, targets):
+        """Label smoothing loss для CTC"""
+        # Используем стандартный CTC как baseline для smoothing
+        baseline_loss = nn.CTCLoss(
+            blank=self.blank_idx, reduction="mean", zero_infinity=True
+        )
+
+        T, B, C = log_probs.shape
+        input_lengths = torch.full((B,), T, dtype=torch.long, device=self.device)
+
+        targets_list = []
+        target_lengths_list = []
+        for text in targets:
+            t = [self.alphabet.index(c) for c in text if c in self.alphabet]
+            targets_list.extend(t)
+            target_lengths_list.append(len(t))
+
+        targets = torch.tensor(targets_list, dtype=torch.long, device=self.device)
+        target_lengths = torch.tensor(
+            target_lengths_list, dtype=torch.long, device=self.device
+        )
+
+        return baseline_loss(log_probs, targets, input_lengths, target_lengths)
 
     def training_step(self, batch, batch_idx):
         images, texts = batch
@@ -50,15 +75,9 @@ class OCRModuleV2(pl.LightningModule):
             target_lengths_list, dtype=torch.long, device=self.device
         )
 
-        # target_weights = torch.ones_like(targets)
-        # confusion_pairs = {self.alphabet.index('Y'): 1.5, self.alphabet.index('H'): 1.5,
-        #                 self.alphabet.index('X'): 1.5, self.alphabet.index('A'): 1.5}
-
-        # for idx, char_idx in enumerate(targets):
-        #     if char_idx.item() in confusion_pairs:
-        #         target_weights[idx] = confusion_pairs[char_idx.item()]
-
         loss = self.ctc_loss(log_probs, targets, input_lengths, target_lengths)
+        smooth_loss = self._label_smoothing_loss(log_probs, texts)
+        loss = (1 - self.label_smoothing) * loss + self.label_smoothing * smooth_loss
 
         if batch_idx % 100 == 0:
             decoded = self.decode_greedy(log_probs)
@@ -120,7 +139,7 @@ class OCRModuleV2(pl.LightningModule):
             optimizer,
             mode="min",
             factor=0.2,
-            patience=5,
+            patience=self.hparams.config.trainer.patience,
         )
         return {
             "optimizer": optimizer,

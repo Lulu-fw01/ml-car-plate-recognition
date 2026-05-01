@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import math
 
 from torchvision.models import resnet34, ResNet34_Weights
@@ -14,15 +15,9 @@ class ResNet34CRNN(nn.Module):
         self.conv1 = nn.Conv2d(
             1, 64, kernel_size=3, stride=1, padding=1, bias=False
         )  # cверточный слой
-        # self.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False) # cверточный слой
-        # self.bn1 = resnet.bn1  # норм
         self.bn1 = nn.BatchNorm2d(64, dtype=torch.float32)
         self.relu = resnet.relu
         self.maxpool = resnet.maxpool
-
-        # with torch.no_grad():
-        #     w = resnet.conv1.weight
-        #     self.conv1.weight.copy_(w.mean(dim=1, keepdim=True))
 
         self.layer1 = resnet.layer1
         self.layer2 = resnet.layer2
@@ -76,13 +71,13 @@ class ResNet34CRNN(nn.Module):
         x = self.layer3(x)
         x = self.layer4(x)  # [B, 512, H, W]
 
-        x = torch.mean(x, dim=2)  # [B, 512, W]
-        x = x.permute(0, 2, 1)  # [B, W, 512] - формат для LSTM (Batch, Seq, Features)
+        x = F.adaptive_avg_pool2d(x, (1, x.size(3))).squeeze(2)  # [B, 512, W]
+        x = x.permute(0, 2, 1)  # [B, W, 512] - для LSTM (Batch, Seq, Features)
 
         x = self.projection(x)
 
-        # seq_len = x.size(1)
-        # x = x + self.pos_encoding[:, :seq_len, :]
+        seq_len = x.size(1)
+        x = x + self.pos_encoding[:, :seq_len, :]
 
         x = self.dropout(x)
         x, _ = self.lstm(x)

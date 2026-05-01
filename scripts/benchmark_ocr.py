@@ -28,7 +28,7 @@ BLANK_IDX = len(ALPHABET) - 1
 MODEL_V1_PATH = "mlartifacts/ocr/ocr-v1-epoch=04-val_acc=0.9583.ckpt"
 # MODEL_V2_PATH = "mlartifacts/ocr_v2/crnn-epoch=11-val_cer=0.0240.ckpt"
 # MODEL_V2_PATH = "mlartifacts/ocr_v2/crnn-epoch=13-val_cer=0.0240.ckpt"
-MODEL_V2_PATH = "mlartifacts/ocr_v2/crnn-epoch=06-val_cer=0.0219.ckpt"
+MODEL_V2_PATH = "mlartifacts/ocr_v2/crnn-epoch=03-val_cer=0.0178.ckpt"
 TEST_DIR = "data/raw/ocr/test/img"
 IMG_H = 32
 IMG_W = 128

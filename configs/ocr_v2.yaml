@@ -20,6 +20,7 @@ trainer:
   num_workers: 4
   accelerator: "auto"
   devices: "auto"
+  patience: 10
 
 ocr:
   alphabet: "0123456789ABEKMHOPCTYX_"

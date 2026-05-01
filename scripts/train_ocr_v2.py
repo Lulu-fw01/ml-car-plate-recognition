@@ -82,16 +82,8 @@ def main(cfg: DictConfig):
         verbose=True,
     )
 
-    # trainer = Trainer(
-    #     logger=mlf_logger,
-    #     callbacks=[checkpoint_callback],
-    #     max_epochs=cfg.trainer.max_epochs,
-    #     accelerator=device,
-    #     devices=1,
-    # )
-
     early_stop_callback = EarlyStopping(
-        monitor="val_cer", patience=5, mode="min", verbose=True
+        monitor="val_cer", patience=cfg.trainer.patience, mode="min", verbose=True
     )
     trainer = Trainer(
         logger=mlf_logger,
