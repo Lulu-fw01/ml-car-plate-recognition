@@ -9,8 +9,11 @@ import torch
 from omegaconf import DictConfig
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers import MLFlowLogger
-from pytorch_lightning.callbacks import ModelCheckpoint
-from pytorch_lightning.callbacks import EarlyStopping
+from pytorch_lightning.callbacks import (
+    ModelCheckpoint,
+    EarlyStopping,
+    LearningRateMonitor,
+)
 
 import sys
 
@@ -85,14 +88,16 @@ def main(cfg: DictConfig):
     early_stop_callback = EarlyStopping(
         monitor="val_cer", patience=cfg.trainer.patience, mode="min", verbose=True
     )
+
+    lr_monitor = LearningRateMonitor(logging_interval="epoch")
+
     trainer = Trainer(
         logger=mlf_logger,
-        callbacks=[checkpoint_callback, early_stop_callback],
+        callbacks=[checkpoint_callback, early_stop_callback, lr_monitor],
         max_epochs=cfg.trainer.max_epochs,
         accelerator="auto",
         devices=1,
         gradient_clip_val=5.0,
-        # precision="16-mixed",
     )
 
     trainer.fit(model, train_loader, val_loader)
