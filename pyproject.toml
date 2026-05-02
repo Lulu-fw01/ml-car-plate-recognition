@@ -8,6 +8,7 @@ dependencies = [
     "grpcio-reflection>=1.78.0",
     "grpcio-tools>=1.78.0",
     "jiwer>=4.0.0",
+    "pyctcdecode>=0.5.0",
     "rapidfuzz>=3.13.0",
     "scikit-learn>=1.6.1",
     "seaborn>=0.13.2",

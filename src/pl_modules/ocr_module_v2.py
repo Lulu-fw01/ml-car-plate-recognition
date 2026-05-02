@@ -6,6 +6,7 @@ from torchmetrics import CharErrorRate
 import jiwer
 
 from models.ocr_v2 import ResNet34CRNN
+from pl_modules.label_smoothing_loss import label_smoothing_loss
 
 
 class OCRModuleV2(pl.LightningModule):
@@ -76,7 +77,13 @@ class OCRModuleV2(pl.LightningModule):
         )
 
         loss = self.ctc_loss(log_probs, targets, input_lengths, target_lengths)
-        smooth_loss = self._label_smoothing_loss(log_probs, texts)
+        smooth_loss = label_smoothing_loss(
+            alphabet=self.alphabet,
+            blank_idx=self.blank_idx,
+            log_probs=log_probs,
+            targets=texts,
+            device=self.device,
+        )
         loss = (1 - self.label_smoothing) * loss + self.label_smoothing * smooth_loss
 
         if batch_idx % 100 == 0:
@@ -133,7 +140,9 @@ class OCRModuleV2(pl.LightningModule):
 
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(
-            self.parameters(), lr=self.hparams.config.trainer.lr, weight_decay=1e-3
+            self.parameters(),
+            lr=self.hparams.config.trainer.lr,
+            weight_decay=self.hparams.config.trainer.weight_decay,
         )
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
             optimizer,
