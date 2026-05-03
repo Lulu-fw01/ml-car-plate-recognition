@@ -1,11 +1,8 @@
 import torch
-from torch._prims_common import DeviceLikeType
 import torch.nn as nn
 
 
-def _label_smoothing_loss(
-    alphabet: str, blank_idx: int, log_probs, targets, device: DeviceLikeType | None
-):
+def label_smoothing_loss(alphabet: str, blank_idx: int, log_probs, targets, device):
     baseline_loss = nn.CTCLoss(blank=blank_idx, reduction="mean", zero_infinity=True)
 
     T, B, C = log_probs.shape
