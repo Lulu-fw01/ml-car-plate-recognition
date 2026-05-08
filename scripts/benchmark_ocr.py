@@ -19,42 +19,66 @@ sys.path.append("src")
 
 from pl_modules.ocr_module_v1 import OCRModuleV1
 from pl_modules.ocr_module_v2 import OCRModuleV2
+from pl_modules.ocr_module_v3 import OCRModuleV3
+from pl_modules.ocr_module_v4 import OCRModuleV4
 
 
-ALPHABET = "0123456789ABEKMHOPCTYX_"
-LABELS = list(ALPHABET) + ["<DEL>", "<INS>"]
-BLANK_IDX = len(ALPHABET) - 1
+ALPHABET_V1_V2_V3 = "0123456789ABEKMHOPCTYX_"
+ALPHABET_V4 = "0123456789ABEKMHOPCTYX"
+LABELS_V1_V2_V3 = list(ALPHABET_V1_V2_V3) + ["<DEL>", "<INS>"]
+LABELS_V4 = list(ALPHABET_V4) + ["<SOS>", "<EOS>", "<PAD>"]
+BLANK_IDX = len(ALPHABET_V1_V2_V3) - 1
 
 MODEL_V1_PATH = "mlartifacts/ocr/ocr-v1-epoch=04-val_acc=0.9583.ckpt"
-# MODEL_V2_PATH = "mlartifacts/ocr_v2/crnn-epoch=11-val_cer=0.0240.ckpt"
-# MODEL_V2_PATH = "mlartifacts/ocr_v2/crnn-epoch=13-val_cer=0.0240.ckpt"
 MODEL_V2_PATH = "mlartifacts/ocr_v2/crnn-epoch=03-val_cer=0.0178.ckpt"
+MODEL_V3_PATH = "mlartifacts/ocr_v3/crnn-epoch=03-val_cer=0.0080.ckpt"
+MODEL_V4_PATH = "mlartifacts/ocr_v4/transformer-epoch=22-val_cer=0.0216.ckpt"
+
 TEST_DIR = "data/raw/ocr/test/img"
-IMG_H = 32
-IMG_W = 128
 
 
 class OCRBenchmark:
-    def __init__(self, model_v1_path: str, model_v2_path: str, test_dir: str):
-        self.model_v1_path = model_v1_path
-        self.model_v2_path = model_v2_path
+    def __init__(self, test_dir: str):
         self.test_dir = Path(test_dir)
         self.img_paths = sorted(self.test_dir.glob("*.png"))
 
         self.transform_v1 = transforms.Compose(
             [
                 transforms.Grayscale(),
-                transforms.Resize((IMG_H, IMG_W)),
+                transforms.Resize((32, 128)),
                 transforms.ToTensor(),
                 transforms.Normalize(mean=[0.5], std=[0.5]),
             ]
         )
+
         self.transform_v2 = transforms.Compose(
             [
                 transforms.Grayscale(),
                 transforms.Resize(
                     (64, 160), interpolation=transforms.InterpolationMode.BILINEAR
-                ),  # фиксация размера
+                ),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=[0.5], std=[0.5]),
+            ]
+        )
+
+        self.transform_v3 = transforms.Compose(
+            [
+                transforms.Grayscale(),
+                transforms.Resize(
+                    (64, 160), interpolation=transforms.InterpolationMode.BILINEAR
+                ),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=[0.5], std=[0.5]),
+            ]
+        )
+
+        self.transform_v4 = transforms.Compose(
+            [
+                transforms.Grayscale(),
+                transforms.Resize(
+                    (64, 160), interpolation=transforms.InterpolationMode.BILINEAR
+                ),
                 transforms.ToTensor(),
                 transforms.Normalize(mean=[0.5], std=[0.5]),
             ]
@@ -63,18 +87,41 @@ class OCRBenchmark:
         self.device = "cpu"
         self.model_v1 = None
         self.model_v2 = None
+        self.model_v3 = None
+        self.model_v4 = None
 
     def load_model_v1(self):
         self.model_v1 = OCRModuleV1.load_from_checkpoint(
-            self.model_v1_path, map_location=self.device, weights_only=False
+            MODEL_V1_PATH, map_location=self.device, weights_only=False
         )
-        print(f"OCR v1 model loaded from {self.model_v1_path}")
+        print(f"OCR v1 model loaded from {MODEL_V1_PATH}")
 
     def load_model_v2(self):
         self.model_v2 = OCRModuleV2.load_from_checkpoint(
-            self.model_v2_path, map_location=self.device, weights_only=False
+            MODEL_V2_PATH, map_location=self.device, weights_only=False
         )
-        print(f"OCR v2 model loaded {self.model_v2_path}")
+        print(f"OCR v2 model loaded from {MODEL_V2_PATH}")
+
+    def load_model_v3(self):
+        self.model_v3 = OCRModuleV3.load_from_checkpoint(
+            MODEL_V3_PATH, map_location=self.device, weights_only=False
+        )
+        print(f"OCR v3 model loaded from {MODEL_V3_PATH}")
+
+    def load_model_v4(self):
+        self.model_v4 = OCRModuleV4(
+            alphabet=ALPHABET_V4,
+            num_classes=25,
+            hidden_dim=256,
+            max_len=9,
+            nhead=8,
+            num_layers=3,
+        )
+        checkpoint = torch.load(
+            MODEL_V4_PATH, map_location=self.device, weights_only=False
+        )
+        self.model_v4.load_state_dict(checkpoint["state_dict"])
+        print(f"OCR v4 model loaded from {MODEL_V4_PATH}")
 
     def predict_v1(self, tensor: torch.Tensor) -> str:
         self.model_v1.eval()
@@ -89,8 +136,8 @@ class OCRBenchmark:
             idx_item = idx.item()
             if idx_item == BLANK_IDX:
                 break
-            if idx_item < len(ALPHABET):
-                chars.append(ALPHABET[idx_item])
+            if idx_item < len(ALPHABET_V1_V2_V3):
+                chars.append(ALPHABET_V1_V2_V3[idx_item])
 
         return "".join(chars)
 
@@ -109,20 +156,53 @@ class OCRBenchmark:
         for idx in preds:
             idx_item = idx.item()
             if idx_item != prev and idx_item != BLANK_IDX:
-                if idx_item < len(ALPHABET):
-                    chars.append(ALPHABET[idx_item])
+                if idx_item < len(ALPHABET_V1_V2_V3):
+                    chars.append(ALPHABET_V1_V2_V3[idx_item])
             prev = idx_item
 
         return "".join(chars)
 
+    def predict_v3(self, tensor: torch.Tensor) -> str:
+        self.model_v3.eval()
+        device = next(self.model_v3.parameters()).device
+        tensor = tensor.to(device)
+
+        with torch.no_grad():
+            logits = self.model_v3(tensor)
+            preds = logits.argmax(dim=-1).squeeze()
+
+        chars = []
+        prev = -1
+
+        for idx in preds:
+            idx_item = idx.item()
+            if idx_item != prev and idx_item != BLANK_IDX:
+                if idx_item < len(ALPHABET_V1_V2_V3):
+                    chars.append(ALPHABET_V1_V2_V3[idx_item])
+            prev = idx_item
+
+        return "".join(chars)
+
+    def predict_v4(self, tensor: torch.Tensor) -> str:
+        self.model_v4.eval()
+        device = next(self.model_v4.parameters()).device
+        tensor = tensor.to(device)
+
+        with torch.no_grad():
+            tokens = self.model_v4(tensor)
+
+        return self.model_v4.tokens_to_string(tokens)[0]
+
     def benchmark_model(self, model_name: str) -> dict:
-        predict_fn = self.predict_v1 if model_name == "v1" else self.predict_v2
-        transform_fn = self.transform_v1 if model_name == "v1" else self.transform_v2
+        predict_fn = getattr(self, f"predict_{model_name}")
+        transform_fn = getattr(self, f"transform_{model_name}")
+
+        labels = LABELS_V1_V2_V3 if model_name in ["v1", "v2", "v3"] else LABELS_V4
 
         predictions = []
         ground_truths = []
         errors = []
-        confusion_matrix = np.zeros((len(ALPHABET) + 2, len(ALPHABET) + 2), dtype=int)
+        confusion_matrix = np.zeros((len(labels), len(labels)), dtype=int)
 
         total_s = 0
         total_d = 0
@@ -154,7 +234,7 @@ class OCRBenchmark:
             total_n += len(target)
 
             confusion_matrix = update_confusion_matrix(
-                confusion_matrix, pred, target, LABELS
+                confusion_matrix, pred, target, labels
             )
 
             if pred != target:
@@ -200,127 +280,98 @@ class OCRBenchmark:
             "per_position_accuracy": per_position,
             "confusion_matrix": confusion_matrix,
             "errors": errors,
+            "labels": labels,
         }
 
     def run_comparison(self) -> dict:
-        results = {"v1": self.benchmark_model("v1"), "v2": self.benchmark_model("v2")}
+        results = {
+            "v1": self.benchmark_model("v1"),
+            "v2": self.benchmark_model("v2"),
+            "v3": self.benchmark_model("v3"),
+            "v4": self.benchmark_model("v4"),
+        }
         return results
 
     def save_results(self, results: dict, output_dir: str = "benchmark_results"):
         output_dir = Path(output_dir)
         output_dir.mkdir(exist_ok=True)
 
-        json_results = {
-            "v1": {
-                "num_samples": results["v1"]["num_samples"],
-                "timing": results["v1"]["timing"],
-                "metrics": results["v1"]["metrics"],
-                "per_position_accuracy": results["v1"]["per_position_accuracy"],
-            },
-            "v2": {
-                "num_samples": results["v2"]["num_samples"],
-                "timing": results["v2"]["timing"],
-                "metrics": results["v2"]["metrics"],
-                "per_position_accuracy": results["v2"]["per_position_accuracy"],
-            },
-        }
+        json_results = {}
+        for key in results:
+            json_results[key] = {
+                "num_samples": results[key]["num_samples"],
+                "timing": results[key]["timing"],
+                "metrics": results[key]["metrics"],
+                "per_position_accuracy": results[key]["per_position_accuracy"],
+            }
 
         with open(output_dir / "benchmark_results.json", "w", encoding="utf-8") as f:
             json.dump(json_results, f, indent=2, ensure_ascii=False)
 
-        save_errors_to_file(results["v1"]["errors"], output_dir / "v1_errors.csv")
-        save_errors_to_file(results["v2"]["errors"], output_dir / "v2_errors.csv")
-
-        save_to_csv(
-            results["v1"]["confusion_matrix"],
-            LABELS,
-            output_dir / "confusion_matrix_v1.csv",
-        )
-        save_to_png(
-            results["v1"]["confusion_matrix"],
-            LABELS,
-            output_dir / "confusion_matrix_v1.png",
-        )
-        save_to_csv(
-            results["v2"]["confusion_matrix"],
-            LABELS,
-            output_dir / "confusion_matrix_v2.csv",
-        )
-        save_to_png(
-            results["v2"]["confusion_matrix"],
-            LABELS,
-            output_dir / "confusion_matrix_v2.png",
-        )
+        for key in results:
+            save_errors_to_file(
+                results[key]["errors"], output_dir / f"{key}_errors.csv"
+            )
+            save_to_csv(
+                results[key]["confusion_matrix"],
+                results[key]["labels"],
+                output_dir / f"confusion_matrix_{key}.csv",
+            )
+            save_to_png(
+                results[key]["confusion_matrix"],
+                results[key]["labels"],
+                output_dir / f"confusion_matrix_{key}.png",
+            )
 
         print(f"\nResults saved to {output_dir}/")
 
     def print_summary(self, results: dict):
-        print("\n" + "=" * 80)
-        print("OCR models comparing:")
-        print("=" * 80)
+        print("\n" + "=" * 100)
+        print("OCR Models Comparison")
+        print("=" * 100)
 
-        v1 = results["v1"]
-        v2 = results["v2"]
+        model_keys = list(results.keys())
+        header = f"{'Metric':<25}" + "".join([f"{f'OCR {k}':<18}" for k in model_keys])
+        print(f"\n{header}")
+        print("-" * (25 + 18 * len(model_keys)))
 
-        print(f"\n{'Metric':<25} {'OCR v1':<20} {'OCR v2':<20}")
-        print("-" * 65)
+        print(f"\n{'TIMING':-^{25 + 18 * len(model_keys)}}")
+        timing_metrics = ["total_time_sec", "avg_time_ms", "fps"]
+        for metric in timing_metrics:
+            row = f"{metric:<25}"
+            for key in model_keys:
+                row += f"{results[key]['timing'][metric]:<18.2f}"
+            print(row)
 
-        print(f"\n{'TIMING':-^65}")
-        print(
-            f"{'Total time (s)':<25} {v1['timing']['total_time_sec']:<20.2f} {v2['timing']['total_time_sec']:<20.2f}"
-        )
-        print(
-            f"{'Avg time (ms)':<25} {v1['timing']['avg_time_ms']:<20.2f} {v2['timing']['avg_time_ms']:<20.2f}"
-        )
-        print(f"{'FPS':<25} {v1['timing']['fps']:<20.2f} {v2['timing']['fps']:<20.2f}")
+        print(f"\n{'MAIN METRICS':-^{25 + 18 * len(model_keys)}}")
+        main_metrics = ["full_accuracy", "cer", "precision", "recall", "f1_score"]
+        for metric in main_metrics:
+            row = f"{metric:<25}"
+            for key in model_keys:
+                row += f"{results[key]['metrics'][metric]:<18.4f}"
+            print(row)
 
-        print(f"\n{'MAIN METRICS':-^65}")
-        print(
-            f"{'Full Accuracy':<25} {v1['metrics']['full_accuracy']:<20.4f} {v2['metrics']['full_accuracy']:<20.4f}"
-        )
-        print(
-            f"{'CER':<25} {v1['metrics']['cer']:<20.4f} {v2['metrics']['cer']:<20.4f}"
-        )
-        print(
-            f"{'Precision':<25} {v1['metrics']['precision']:<20.4f} {v2['metrics']['precision']:<20.4f}"
-        )
-        print(
-            f"{'Recall':<25} {v1['metrics']['recall']:<20.4f} {v2['metrics']['recall']:<20.4f}"
-        )
-        print(
-            f"{'F1-Score':<25} {v1['metrics']['f1_score']:<20.4f} {v2['metrics']['f1_score']:<20.4f}"
-        )
+        print(f"\n{'CER BREAKDOWN':-^{25 + 18 * len(model_keys)}}")
+        cer_metrics = ["cer_s", "cer_d", "cer_i", "cer_n"]
+        for metric in cer_metrics:
+            row = f"{metric:<25}"
+            for key in model_keys:
+                row += f"{results[key]['metrics'][metric]:<18}"
+            print(row)
 
-        print(f"\n{'CER BREAKDOWN':-^65}")
-        print(
-            f"{'Substitutions':<25} {v1['metrics']['cer_s']:<20} {v2['metrics']['cer_s']:<20}"
-        )
-        print(
-            f"{'Deletions':<25} {v1['metrics']['cer_d']:<20} {v2['metrics']['cer_d']:<20}"
-        )
-        print(
-            f"{'Insertions':<25} {v1['metrics']['cer_i']:<20} {v2['metrics']['cer_i']:<20}"
-        )
-        print(
-            f"{'Total chars':<25} {v1['metrics']['cer_n']:<20} {v2['metrics']['cer_n']:<20}"
-        )
+        print(f"\n{'ERRORS':-^{25 + 18 * len(model_keys)}}")
+        row = f"{'Total errors':<25}"
+        for key in model_keys:
+            row += f"{len(results[key]['errors']):<18}"
+        print(row)
 
-        print(f"\n{'PER-POSITION ACCURACY':-^65}")
-        print(f"{'Position':<10} {'v1 Acc':<15} {'v2 Acc':<15}")
-        for pos_v1, pos_v2 in zip(
-            v1["per_position_accuracy"], v2["per_position_accuracy"]
-        ):
-            print(
-                f"{pos_v1['position']:<10} {pos_v1['accuracy']:<15.4f} {pos_v2['accuracy']:<15.4f}"
-            )
+        row = f"{'Error rate (%)':<25}"
+        for key in model_keys:
+            rate = len(results[key]["errors"]) / results[key]["num_samples"] * 100
+            row += f"{rate:<18.2f}"
+        print(row)
 
-        print(f"\n{'ERRORS':-^65}")
-        print(f"{'Total errors':<25} {len(v1['errors']):<20} {len(v2['errors']):<20}")
-        print(
-            f"{'Error rate (%)':<25} {len(v1['errors']) / v1['num_samples'] * 100:<20.2f} {len(v2['errors']) / v2['num_samples'] * 100:<20.2f}"
-        )
-
-        print("\n" + "=" * 80)
+        print("\n" + "=" * 100)
 
 
 def main():
@@ -328,10 +379,12 @@ def main():
     print("=" * 50)
     print(f"Test directory: {TEST_DIR}")
 
-    benchmark = OCRBenchmark(MODEL_V1_PATH, MODEL_V2_PATH, TEST_DIR)
+    benchmark = OCRBenchmark(TEST_DIR)
 
     benchmark.load_model_v1()
     benchmark.load_model_v2()
+    benchmark.load_model_v3()
+    benchmark.load_model_v4()
 
     results = benchmark.run_comparison()
 
