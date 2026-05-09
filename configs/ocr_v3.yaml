@@ -1,7 +1,7 @@
 defaults:
   - _self_
 
-task: "ocr_v2"
+task: "ocr_v3"
 
 data:
   path: "data/raw/ocr"
@@ -30,4 +30,4 @@ ocr:
 logging:
   mlflow:
     tracking_uri: "http://127.0.0.1:8080"
-    experiment_name: "ocr-v2"
+    experiment_name: "ocr-v3"

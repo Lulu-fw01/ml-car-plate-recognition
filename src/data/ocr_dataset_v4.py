@@ -29,6 +29,10 @@ class OCRDatasetV4(torch.utils.data.Dataset):
                 A.RandomResizedCrop(
                     size=(64, 160), scale=(0.85, 1.0), ratio=(0.9, 1.1), p=0.5
                 ),
+                A.GridDistortion(num_steps=5, distort_limit=0.3, p=0.2),
+                A.CoarseDropout(max_holes=4, max_height=8, max_width=16, p=0.3),
+                A.Blur(blur_limit=3, p=0.2),
+                A.GaussianBlur(blur_limit=(3, 5), p=0.3),
             ]
         )
 
