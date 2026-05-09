@@ -1,0 +1,33 @@
+defaults:
+  - _self_
+
+task: "ocr_v4"
+
+data:
+  path: "data/raw/ocr"
+  img_h: 64
+  img_w: 160
+
+model:
+  hidden_size: 256
+  max_len: 9
+  nhead: 8
+  num_layers: 3
+
+trainer:
+  max_epochs: 40
+  batch_size: 64
+  lr: 0.00001
+  weight_decay: 0.05
+  num_workers: 4
+  accelerator: "auto"
+  devices: "auto"
+  patience: 15
+
+ocr:
+  alphabet: "0123456789ABEKMHOPCTYX"
+
+logging:
+  mlflow:
+    tracking_uri: "http://127.0.0.1:8080"
+    experiment_name: "ocr-v4"
