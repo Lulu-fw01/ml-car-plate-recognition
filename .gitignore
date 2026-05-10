@@ -213,6 +213,7 @@ __marimo__/
 /mlruns
 /mlartifacts
 /debug_images
+/benchmark_results
 
 data.yaml
 yolov5su.pt
