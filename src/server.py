@@ -18,7 +18,7 @@ import torch.nn.functional as F
 from torchvision import transforms
 from ultralytics import YOLO
 
-from pl_modules.ocr_module_v1 import OCRModuleV1
+from pl_modules.ocr_module_v3 import OCRModuleV3
 
 from generated import ml_car_plate_recognition_pb2
 from generated import ml_car_plate_recognition_pb2_grpc
@@ -28,14 +28,17 @@ class MLServicer(
     ml_car_plate_recognition_pb2_grpc.MLCarPlateRecognitionServiceServicer
 ):
     def __init__(self, cfg):
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        logging.info(f"Using device: {self.device}")
+
         logging.info("Loading detection model...")
         self.det_model = YOLO(cfg.models.detection)
         logging.info("Loading OCR model...")
 
-        self.ocr_model = OCRModuleV1.load_from_checkpoint(
-            cfg.models.ocr, map_location="cpu", weights_only=False
+        self.model_v3 = OCRModuleV3.load_from_checkpoint(
+            cfg.models.ocr, map_location=self.device, weights_only=False
         )
-        self.ocr_model.eval()
+        self.model_v3.eval()
 
         self.cfg = cfg
         self.alphabet = cfg.ocr.alphabet
@@ -46,7 +49,9 @@ class MLServicer(
         self.transform = transforms.Compose(
             [
                 transforms.Grayscale(),
-                transforms.Resize((self.img_h, self.img_w)),
+                transforms.Resize(
+                    (64, 160), interpolation=transforms.InterpolationMode.BILINEAR
+                ),
                 transforms.ToTensor(),
                 transforms.Normalize(mean=[0.5], std=[0.5]),
             ]
@@ -62,7 +67,7 @@ class MLServicer(
         h, w = image.shape[:2]
         logging.debug(f"Image decoded: {w}x{h}")
 
-        results = self.det_model(image, conf=conf_threshold)
+        results = self.det_model(image, conf=conf_threshold, imgsz=320)
         boxes = results[0].boxes
 
         if len(boxes) == 0:
@@ -83,18 +88,25 @@ class MLServicer(
         tensor = self.transform(pil_image).unsqueeze(0)
 
         with torch.no_grad():
-            logits = self.ocr_model.model(tensor)
+            logits = self.model_v3.model(tensor)
             preds = logits.argmax(dim=-1).squeeze()
-            max_probs = F.softmax(logits, dim=-1).max(dim=-1).values.squeeze(0)
+            probs = F.softmax(logits, dim=-1).max(dim=-1).values.squeeze(0)
 
         chars = []
         confidences = []
+        prev = -1
+
         for i, idx in enumerate(preds):
             idx_item = idx.item()
-            if idx_item == self.pad_idx:
+            if idx_item == prev:
                 continue
-            chars.append(self.alphabet[idx_item])
-            confidences.append(max_probs[i].item())
+            if idx_item == self.pad_idx:
+                prev = idx_item
+                continue
+            if idx_item < len(self.alphabet):
+                chars.append(self.alphabet[idx_item])
+                confidences.append(probs[i].item())
+            prev = idx_item
 
         plate_text = "".join(chars)
         avg_confidence = float(np.mean(confidences)) if confidences else 0.0
