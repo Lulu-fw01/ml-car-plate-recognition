@@ -14,7 +14,6 @@ import cv2
 import numpy as np
 from PIL import Image
 import torch
-import torch.nn.functional as F
 from torchvision import transforms
 from ultralytics import YOLO
 
@@ -97,28 +96,29 @@ class MLServicer(
 
         with torch.no_grad():
             logits = self.model_v3.model(tensor)
-            preds = logits.argmax(dim=-1).squeeze()
-            probs = F.softmax(logits, dim=-1).max(dim=-1).values.squeeze(0)
+            preds = logits.argmax(dim=-1).squeeze(0)
+            probs = torch.softmax(logits, dim=-1).squeeze(0)
 
         chars = []
         confidences = []
         prev = -1
-
         for i, idx in enumerate(preds):
             idx_item = idx.item()
             if idx_item == prev:
                 continue
+
             if idx_item == self.pad_idx:
                 prev = idx_item
                 continue
+
             if idx_item < len(self.alphabet):
                 chars.append(self.alphabet[idx_item])
-                confidences.append(probs[i].item())
+                confidences.append(probs[i, idx_item].item())
+
             prev = idx_item
 
         plate_text = "".join(chars)
-        avg_confidence = float(np.mean(confidences)) if confidences else 0.0
-
+        avg_confidence = float(np.mean(confidences))
         return plate_text, avg_confidence
 
     def _save_image(self, img_bytes):
