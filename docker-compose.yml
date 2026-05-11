@@ -1,0 +1,22 @@
+services:
+  ml-car-plate-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ml-car-plate-server:latest
+    container_name: ml-car-plate-server
+    ports:
+      - "50051:50051"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - OMP_NUM_THREADS=4
+    networks:
+      - ml_cpr_network
+    volumes:
+      - ./runs:/app/runs:ro
+      - ./mlartifacts:/app/mlartifacts:ro
+    restart: unless-stopped
+
+networks:
+  ml_cpr_network:
+    external: true

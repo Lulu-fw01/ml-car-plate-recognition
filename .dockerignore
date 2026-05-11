@@ -1,0 +1,80 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+venv/
+.venv/
+ENV/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# MLflow
+mlruns/
+mlartifacts/*/events*
+mlartifacts/*/*.ckpt  # Exclude all ckpt except specific ones
+
+# Data
+data/
+
+# Archive files (large, not needed in container)
+*.zip
+
+# Logs and cache
+*.log
+.pytest_cache/
+.coverage
+htmlcov/
+*.cache
+
+# Debug images
+debug_images/
+
+# Benchmark results
+benchmark_results/
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose*.yml
+
+# Documentation
+*.md
+!README.md
+
+# Temporary files
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+
+# Model checkpoints (INCLUDE specific models needed for server)
+mlartifacts/ocr_v1/
+mlartifacts/ocr_v2/
+mlartifacts/ocr_v3/*.ckpt
+mlartifacts/ocr_v4/
+
+# Detection models (INCLUDE)
+runs/baseline/weights/best.pt
+runs/detect/

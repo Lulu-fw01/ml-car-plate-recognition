@@ -12,6 +12,26 @@ gen-go:
 	mkdir -p clients/go/pb
 	protoc --go_out=./clients/go/pb --go_opt=paths=source_relative --go-grpc_out=./clients/go/pb --go-grpc_opt=paths=source_relative -I proto proto/ml_car_plate_recognition.proto
 
-
 run-app:
 	uv run ./src/server.py
+
+network:
+	docker network create ml_cpr_network 2>/dev/null || true
+
+up: network
+	docker-compose up --build
+
+down:
+	docker-compose down
+
+restart: down up
+
+build:
+	docker-compose build --no-cache
+
+logs:
+	docker-compose logs -f
+
+clean:
+	docker-compose down -v
+	docker-network rm ml_cpr_network 2>/dev/null || true
