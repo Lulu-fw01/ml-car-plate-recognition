@@ -65,28 +65,29 @@ func (x *PredictRequest) GetImageData() []byte {
 	return nil
 }
 
-type PredictResponse struct {
+type PlateResult struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	PlateNumber   string                 `protobuf:"bytes,1,opt,name=plate_number,json=plateNumber,proto3" json:"plate_number,omitempty"`
 	Confidence    float32                `protobuf:"fixed32,2,opt,name=confidence,proto3" json:"confidence,omitempty"`
+	Bbox          *BoundingBox           `protobuf:"bytes,3,opt,name=bbox,proto3" json:"bbox,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *PredictResponse) Reset() {
-	*x = PredictResponse{}
+func (x *PlateResult) Reset() {
+	*x = PlateResult{}
 	mi := &file_ml_car_plate_recognition_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *PredictResponse) String() string {
+func (x *PlateResult) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*PredictResponse) ProtoMessage() {}
+func (*PlateResult) ProtoMessage() {}
 
-func (x *PredictResponse) ProtoReflect() protoreflect.Message {
+func (x *PlateResult) ProtoReflect() protoreflect.Message {
 	mi := &file_ml_car_plate_recognition_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -98,21 +99,148 @@ func (x *PredictResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use PredictResponse.ProtoReflect.Descriptor instead.
-func (*PredictResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use PlateResult.ProtoReflect.Descriptor instead.
+func (*PlateResult) Descriptor() ([]byte, []int) {
 	return file_ml_car_plate_recognition_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *PredictResponse) GetPlateNumber() string {
+func (x *PlateResult) GetPlateNumber() string {
 	if x != nil {
 		return x.PlateNumber
 	}
 	return ""
 }
 
-func (x *PredictResponse) GetConfidence() float32 {
+func (x *PlateResult) GetConfidence() float32 {
 	if x != nil {
 		return x.Confidence
+	}
+	return 0
+}
+
+func (x *PlateResult) GetBbox() *BoundingBox {
+	if x != nil {
+		return x.Bbox
+	}
+	return nil
+}
+
+type BoundingBox struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	X1            int32                  `protobuf:"varint,1,opt,name=x1,proto3" json:"x1,omitempty"`
+	Y1            int32                  `protobuf:"varint,2,opt,name=y1,proto3" json:"y1,omitempty"`
+	X2            int32                  `protobuf:"varint,3,opt,name=x2,proto3" json:"x2,omitempty"`
+	Y2            int32                  `protobuf:"varint,4,opt,name=y2,proto3" json:"y2,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BoundingBox) Reset() {
+	*x = BoundingBox{}
+	mi := &file_ml_car_plate_recognition_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BoundingBox) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BoundingBox) ProtoMessage() {}
+
+func (x *BoundingBox) ProtoReflect() protoreflect.Message {
+	mi := &file_ml_car_plate_recognition_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BoundingBox.ProtoReflect.Descriptor instead.
+func (*BoundingBox) Descriptor() ([]byte, []int) {
+	return file_ml_car_plate_recognition_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *BoundingBox) GetX1() int32 {
+	if x != nil {
+		return x.X1
+	}
+	return 0
+}
+
+func (x *BoundingBox) GetY1() int32 {
+	if x != nil {
+		return x.Y1
+	}
+	return 0
+}
+
+func (x *BoundingBox) GetX2() int32 {
+	if x != nil {
+		return x.X2
+	}
+	return 0
+}
+
+func (x *BoundingBox) GetY2() int32 {
+	if x != nil {
+		return x.Y2
+	}
+	return 0
+}
+
+type PredictMultiResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Plates        []*PlateResult         `protobuf:"bytes,1,rep,name=plates,proto3" json:"plates,omitempty"`
+	TotalDetected int32                  `protobuf:"varint,2,opt,name=total_detected,json=totalDetected,proto3" json:"total_detected,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PredictMultiResponse) Reset() {
+	*x = PredictMultiResponse{}
+	mi := &file_ml_car_plate_recognition_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PredictMultiResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PredictMultiResponse) ProtoMessage() {}
+
+func (x *PredictMultiResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_ml_car_plate_recognition_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PredictMultiResponse.ProtoReflect.Descriptor instead.
+func (*PredictMultiResponse) Descriptor() ([]byte, []int) {
+	return file_ml_car_plate_recognition_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *PredictMultiResponse) GetPlates() []*PlateResult {
+	if x != nil {
+		return x.Plates
+	}
+	return nil
+}
+
+func (x *PredictMultiResponse) GetTotalDetected() int32 {
+	if x != nil {
+		return x.TotalDetected
 	}
 	return 0
 }
@@ -124,14 +252,23 @@ const file_ml_car_plate_recognition_proto_rawDesc = "" +
 	"\x1eml_car_plate_recognition.proto\x12\x02ml\"/\n" +
 	"\x0ePredictRequest\x12\x1d\n" +
 	"\n" +
-	"image_data\x18\x01 \x01(\fR\timageData\"T\n" +
-	"\x0fPredictResponse\x12!\n" +
+	"image_data\x18\x01 \x01(\fR\timageData\"u\n" +
+	"\vPlateResult\x12!\n" +
 	"\fplate_number\x18\x01 \x01(\tR\vplateNumber\x12\x1e\n" +
 	"\n" +
 	"confidence\x18\x02 \x01(\x02R\n" +
-	"confidence2\\\n" +
-	"\x1cMLCarPlateRecognitionService\x12<\n" +
-	"\x11RecognizeCarPlate\x12\x12.ml.PredictRequest\x1a\x13.ml.PredictResponseB.Z,github.com/ml-car-plate-recognition/proto;pbb\x06proto3"
+	"confidence\x12#\n" +
+	"\x04bbox\x18\x03 \x01(\v2\x0f.ml.BoundingBoxR\x04bbox\"M\n" +
+	"\vBoundingBox\x12\x0e\n" +
+	"\x02x1\x18\x01 \x01(\x05R\x02x1\x12\x0e\n" +
+	"\x02y1\x18\x02 \x01(\x05R\x02y1\x12\x0e\n" +
+	"\x02x2\x18\x03 \x01(\x05R\x02x2\x12\x0e\n" +
+	"\x02y2\x18\x04 \x01(\x05R\x02y2\"f\n" +
+	"\x14PredictMultiResponse\x12'\n" +
+	"\x06plates\x18\x01 \x03(\v2\x0f.ml.PlateResultR\x06plates\x12%\n" +
+	"\x0etotal_detected\x18\x02 \x01(\x05R\rtotalDetected2b\n" +
+	"\x1cMLCarPlateRecognitionService\x12B\n" +
+	"\x12RecognizeCarPlates\x12\x12.ml.PredictRequest\x1a\x18.ml.PredictMultiResponseB.Z,github.com/ml-car-plate-recognition/proto;pbb\x06proto3"
 
 var (
 	file_ml_car_plate_recognition_proto_rawDescOnce sync.Once
@@ -145,19 +282,23 @@ func file_ml_car_plate_recognition_proto_rawDescGZIP() []byte {
 	return file_ml_car_plate_recognition_proto_rawDescData
 }
 
-var file_ml_car_plate_recognition_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_ml_car_plate_recognition_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_ml_car_plate_recognition_proto_goTypes = []any{
-	(*PredictRequest)(nil),  // 0: ml.PredictRequest
-	(*PredictResponse)(nil), // 1: ml.PredictResponse
+	(*PredictRequest)(nil),       // 0: ml.PredictRequest
+	(*PlateResult)(nil),          // 1: ml.PlateResult
+	(*BoundingBox)(nil),          // 2: ml.BoundingBox
+	(*PredictMultiResponse)(nil), // 3: ml.PredictMultiResponse
 }
 var file_ml_car_plate_recognition_proto_depIdxs = []int32{
-	0, // 0: ml.MLCarPlateRecognitionService.RecognizeCarPlate:input_type -> ml.PredictRequest
-	1, // 1: ml.MLCarPlateRecognitionService.RecognizeCarPlate:output_type -> ml.PredictResponse
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	2, // 0: ml.PlateResult.bbox:type_name -> ml.BoundingBox
+	1, // 1: ml.PredictMultiResponse.plates:type_name -> ml.PlateResult
+	0, // 2: ml.MLCarPlateRecognitionService.RecognizeCarPlates:input_type -> ml.PredictRequest
+	3, // 3: ml.MLCarPlateRecognitionService.RecognizeCarPlates:output_type -> ml.PredictMultiResponse
+	3, // [3:4] is the sub-list for method output_type
+	2, // [2:3] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_ml_car_plate_recognition_proto_init() }
@@ -171,7 +312,7 @@ func file_ml_car_plate_recognition_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_ml_car_plate_recognition_proto_rawDesc), len(file_ml_car_plate_recognition_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

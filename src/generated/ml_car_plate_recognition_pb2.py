@@ -20,7 +20,7 @@ _sym_db = _symbol_database.Default()
 
 
 DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(
-    b'\n\x1eml_car_plate_recognition.proto\x12\x02ml"$\n\x0ePredictRequest\x12\x12\n\nimage_data\x18\x01 \x01(\x0c";\n\x0fPredictResponse\x12\x14\n\x0cplate_number\x18\x01 \x01(\t\x12\x12\n\nconfidence\x18\x02 \x01(\x02\x32\\\n\x1cMLCarPlateRecognitionService\x12<\n\x11RecognizeCarPlate\x12\x12.ml.PredictRequest\x1a\x13.ml.PredictResponseB.Z,github.com/ml-car-plate-recognition/proto;pbb\x06proto3'
+    b'\n\x1eml_car_plate_recognition.proto\x12\x02ml"$\n\x0ePredictRequest\x12\x12\n\nimage_data\x18\x01 \x01(\x0c"V\n\x0bPlateResult\x12\x14\n\x0cplate_number\x18\x01 \x01(\t\x12\x12\n\nconfidence\x18\x02 \x01(\x02\x12\x1d\n\x04\x62\x62ox\x18\x03 \x01(\x0b\x32\x0f.ml.BoundingBox"=\n\x0b\x42oundingBox\x12\n\n\x02x1\x18\x01 \x01(\x05\x12\n\n\x02y1\x18\x02 \x01(\x05\x12\n\n\x02x2\x18\x03 \x01(\x05\x12\n\n\x02y2\x18\x04 \x01(\x05"O\n\x14PredictMultiResponse\x12\x1f\n\x06plates\x18\x01 \x03(\x0b\x32\x0f.ml.PlateResult\x12\x16\n\x0etotal_detected\x18\x02 \x01(\x05\x32\x62\n\x1cMLCarPlateRecognitionService\x12\x42\n\x12RecognizeCarPlates\x12\x12.ml.PredictRequest\x1a\x18.ml.PredictMultiResponseB.Z,github.com/ml-car-plate-recognition/proto;pbb\x06proto3'
 )
 
 _globals = globals()
@@ -35,8 +35,12 @@ if not _descriptor._USE_C_DESCRIPTORS:
     ]._serialized_options = b"Z,github.com/ml-car-plate-recognition/proto;pb"
     _globals["_PREDICTREQUEST"]._serialized_start = 38
     _globals["_PREDICTREQUEST"]._serialized_end = 74
-    _globals["_PREDICTRESPONSE"]._serialized_start = 76
-    _globals["_PREDICTRESPONSE"]._serialized_end = 135
-    _globals["_MLCARPLATERECOGNITIONSERVICE"]._serialized_start = 137
-    _globals["_MLCARPLATERECOGNITIONSERVICE"]._serialized_end = 229
+    _globals["_PLATERESULT"]._serialized_start = 76
+    _globals["_PLATERESULT"]._serialized_end = 162
+    _globals["_BOUNDINGBOX"]._serialized_start = 164
+    _globals["_BOUNDINGBOX"]._serialized_end = 225
+    _globals["_PREDICTMULTIRESPONSE"]._serialized_start = 227
+    _globals["_PREDICTMULTIRESPONSE"]._serialized_end = 306
+    _globals["_MLCARPLATERECOGNITIONSERVICE"]._serialized_start = 308
+    _globals["_MLCARPLATERECOGNITIONSERVICE"]._serialized_end = 406
 # @@protoc_insertion_point(module_scope)

@@ -4,14 +4,27 @@ package ml;
 option go_package = "github.com/ml-car-plate-recognition/proto;pb";
 
 service MLCarPlateRecognitionService {
-  rpc RecognizeCarPlate(PredictRequest) returns (PredictResponse);
+  rpc RecognizeCarPlates(PredictRequest) returns (PredictMultiResponse);
 }
 
 message PredictRequest {
   bytes image_data = 1;
 }
 
-message PredictResponse {
+message PlateResult {
   string plate_number = 1;
   float confidence = 2;
+  BoundingBox bbox = 3;
+}
+
+message BoundingBox {
+  int32 x1 = 1;
+  int32 y1 = 2;
+  int32 x2 = 3;
+  int32 y2 = 4;
+}
+
+message PredictMultiResponse {
+  repeated PlateResult plates = 1;
+  int32 total_detected = 2;
 }

@@ -19,14 +19,14 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	MLCarPlateRecognitionService_RecognizeCarPlate_FullMethodName = "/ml.MLCarPlateRecognitionService/RecognizeCarPlate"
+	MLCarPlateRecognitionService_RecognizeCarPlates_FullMethodName = "/ml.MLCarPlateRecognitionService/RecognizeCarPlates"
 )
 
 // MLCarPlateRecognitionServiceClient is the client API for MLCarPlateRecognitionService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type MLCarPlateRecognitionServiceClient interface {
-	RecognizeCarPlate(ctx context.Context, in *PredictRequest, opts ...grpc.CallOption) (*PredictResponse, error)
+	RecognizeCarPlates(ctx context.Context, in *PredictRequest, opts ...grpc.CallOption) (*PredictMultiResponse, error)
 }
 
 type mLCarPlateRecognitionServiceClient struct {
@@ -37,10 +37,10 @@ func NewMLCarPlateRecognitionServiceClient(cc grpc.ClientConnInterface) MLCarPla
 	return &mLCarPlateRecognitionServiceClient{cc}
 }
 
-func (c *mLCarPlateRecognitionServiceClient) RecognizeCarPlate(ctx context.Context, in *PredictRequest, opts ...grpc.CallOption) (*PredictResponse, error) {
+func (c *mLCarPlateRecognitionServiceClient) RecognizeCarPlates(ctx context.Context, in *PredictRequest, opts ...grpc.CallOption) (*PredictMultiResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(PredictResponse)
-	err := c.cc.Invoke(ctx, MLCarPlateRecognitionService_RecognizeCarPlate_FullMethodName, in, out, cOpts...)
+	out := new(PredictMultiResponse)
+	err := c.cc.Invoke(ctx, MLCarPlateRecognitionService_RecognizeCarPlates_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func (c *mLCarPlateRecognitionServiceClient) RecognizeCarPlate(ctx context.Conte
 // All implementations must embed UnimplementedMLCarPlateRecognitionServiceServer
 // for forward compatibility.
 type MLCarPlateRecognitionServiceServer interface {
-	RecognizeCarPlate(context.Context, *PredictRequest) (*PredictResponse, error)
+	RecognizeCarPlates(context.Context, *PredictRequest) (*PredictMultiResponse, error)
 	mustEmbedUnimplementedMLCarPlateRecognitionServiceServer()
 }
 
@@ -62,8 +62,8 @@ type MLCarPlateRecognitionServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedMLCarPlateRecognitionServiceServer struct{}
 
-func (UnimplementedMLCarPlateRecognitionServiceServer) RecognizeCarPlate(context.Context, *PredictRequest) (*PredictResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method RecognizeCarPlate not implemented")
+func (UnimplementedMLCarPlateRecognitionServiceServer) RecognizeCarPlates(context.Context, *PredictRequest) (*PredictMultiResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RecognizeCarPlates not implemented")
 }
 func (UnimplementedMLCarPlateRecognitionServiceServer) mustEmbedUnimplementedMLCarPlateRecognitionServiceServer() {
 }
@@ -87,20 +87,20 @@ func RegisterMLCarPlateRecognitionServiceServer(s grpc.ServiceRegistrar, srv MLC
 	s.RegisterService(&MLCarPlateRecognitionService_ServiceDesc, srv)
 }
 
-func _MLCarPlateRecognitionService_RecognizeCarPlate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _MLCarPlateRecognitionService_RecognizeCarPlates_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PredictRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MLCarPlateRecognitionServiceServer).RecognizeCarPlate(ctx, in)
+		return srv.(MLCarPlateRecognitionServiceServer).RecognizeCarPlates(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: MLCarPlateRecognitionService_RecognizeCarPlate_FullMethodName,
+		FullMethod: MLCarPlateRecognitionService_RecognizeCarPlates_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MLCarPlateRecognitionServiceServer).RecognizeCarPlate(ctx, req.(*PredictRequest))
+		return srv.(MLCarPlateRecognitionServiceServer).RecognizeCarPlates(ctx, req.(*PredictRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -113,8 +113,8 @@ var MLCarPlateRecognitionService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*MLCarPlateRecognitionServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "RecognizeCarPlate",
-			Handler:    _MLCarPlateRecognitionService_RecognizeCarPlate_Handler,
+			MethodName: "RecognizeCarPlates",
+			Handler:    _MLCarPlateRecognitionService_RecognizeCarPlates_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
