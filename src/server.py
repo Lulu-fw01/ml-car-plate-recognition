@@ -43,8 +43,8 @@ class MLServicer(
         self.cfg = cfg
         self.alphabet = cfg.ocr.alphabet
         self.pad_idx = cfg.ocr.pad_idx
-        self.img_h = cfg.ocr.img_h
-        self.img_w = cfg.ocr.img_w
+        self.max_plates = cfg.detection.max_plates
+        self.detection_threshold = self.cfg.detection.conf_threshold
 
         self.transform = transforms.Compose(
             [
@@ -57,7 +57,9 @@ class MLServicer(
             ]
         )
 
-    def _detect_plate(self, image_bytes: bytes, conf_threshold: float = 0.5):
+    def _detect_plates(
+        self, image_bytes: bytes, conf_threshold: float, max_plates: int
+    ):
         nparr = np.frombuffer(image_bytes, np.uint8)
         image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
@@ -72,11 +74,17 @@ class MLServicer(
 
         if len(boxes) == 0:
             logging.warning(f"No detections with conf>={conf_threshold}")
-            return None, image
+            return [], image
 
-        box = boxes[0]
-        x1, y1, x2, y2 = map(int, box.xyxy[0])
-        return (x1, y1, x2, y2), image
+        detections = []
+        for i, box in enumerate(boxes[:max_plates]):
+            x1, y1, x2, y2 = map(int, box.xyxy[0])
+            conf = float(box.conf[0].cpu().numpy())
+            detections.append({"bbox": (x1, y1, x2, y2), "confidence": conf})
+
+        detections.sort(key=lambda x: x["confidence"], reverse=True)
+
+        return detections, image
 
     def _crop_plate(self, image, coords):
         x1, y1, x2, y2 = coords
@@ -132,7 +140,7 @@ class MLServicer(
 
         logging.info(f"Image format detected: {fmt}")
 
-    def RecognizeCarPlate(self, request, context):
+    def RecognizeCarPlates(self, request, context):
         try:
             img_bytes = request.image_data
             logging.info(f"Got request: {len(img_bytes)} bytes")
@@ -144,33 +152,45 @@ class MLServicer(
             self._log_image_format(img_bytes)
             self._save_image(img_bytes)
 
-            coords, full_image = self._detect_plate(
-                img_bytes, conf_threshold=self.cfg.detection.conf_threshold
+            conf_threshold = self.detection_threshold
+
+            detections, full_image = self._detect_plates(
+                img_bytes, conf_threshold, self.max_plates
             )
 
-            if coords is None:
-                logging.warning("No license plate detected in the image")
-                context.abort(
-                    grpc.StatusCode.NOT_FOUND, "No license plate detected in the image"
+            if len(detections) == 0:
+                logging.warning("No license plates detected in the image")
+                return ml_car_plate_recognition_pb2.PredictMultiResponse(
+                    plates=[], total_detected=0
                 )
-
-            pil_plate = self._crop_plate(full_image, coords)
-            plate_number, confidence = self._recognize_text(pil_plate)
-
-            logging.info(
-                f"Recognized plate: {plate_number} (confidence: {confidence:.2f})"
-            )
-
-            return ml_car_plate_recognition_pb2.PredictResponse(
-                plate_number=plate_number, confidence=confidence
-            )
         except grpc.RpcError:
             raise
         except Exception as e:
-            logging.error(f"Inference error: {e}")
-            return ml_car_plate_recognition_pb2.PredictResponse(
-                plate_number="", confidence=0.0
+            logging.error(f"Detection error: {e}")
+            return ml_car_plate_recognition_pb2.PredictMultiResponse(
+                plates=[], total_detected=0
             )
+
+        plates = []
+        for det in detections:
+            x1, y1, x2, y2 = det["bbox"]
+            try:
+                pil_plate = self._crop_plate(full_image, (x1, y1, x2, y2))
+                plate_number, confidence = self._recognize_text(pil_plate)
+            except Exception as e:
+                logging.error(f"OCR error: {e}")
+                continue
+
+            bbox = ml_car_plate_recognition_pb2.BoundingBox(x1=x1, y1=y1, x2=x2, y2=y2)
+            plates.append(
+                ml_car_plate_recognition_pb2.PlateResult(
+                    plate_number=plate_number, confidence=confidence, bbox=bbox
+                )
+            )
+
+        return ml_car_plate_recognition_pb2.PredictMultiResponse(
+            plates=plates, total_detected=len(plates)
+        )
 
 
 def serve(cfg):
@@ -198,7 +218,7 @@ def serve(cfg):
     server.start()
     logging.info(f"ML gRPC server started on {address}")
     logging.info("Service: MLCarPlateRecognitionService")
-    logging.info("Method: RecognizeCarPlate")
+    logging.info("Method: RecognizeCarPlates")
 
     try:
         server.wait_for_termination()
