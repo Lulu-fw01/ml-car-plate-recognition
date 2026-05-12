@@ -217,7 +217,10 @@ def serve(cfg):
 
     server.start()
     logging.info(f"ML gRPC server started on {address}")
-    logging.info("Service: MLCarPlateRecognitionService")
+    full_name = ml_car_plate_recognition_pb2.DESCRIPTOR.services_by_name[
+        "MLCarPlateRecognitionService"
+    ].full_name
+    logging.info(f"FULL SERVICE NAME: {full_name}")
     logging.info("Method: RecognizeCarPlates")
 
     try:
