@@ -1,7 +1,7 @@
 import hydra
 import torch
 from omegaconf import DictConfig
-from pytorch_lightning import Trainer
+from pytorch_lightning import seed_everything, Trainer
 from pytorch_lightning.loggers import MLFlowLogger
 from data.ocr_dataset import OCRDataset
 from pl_modules.ocr_module_v1 import OCRModuleV1
@@ -10,6 +10,7 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 
 @hydra.main(config_path="../configs", config_name="ocr", version_base="1.3")
 def main(cfg: DictConfig):
+    seed_everything(42)
     train_ds = OCRDataset(cfg.model.alphabet, cfg.data.path + "/train/img")
     val_ds = OCRDataset(cfg.model.alphabet, cfg.data.path + "/val/img")
 

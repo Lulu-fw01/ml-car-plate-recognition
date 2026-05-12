@@ -7,7 +7,7 @@ if platform.system() == "Darwin":
 import hydra
 import torch
 from omegaconf import DictConfig
-from pytorch_lightning import Trainer
+from pytorch_lightning import seed_everything, Trainer
 from pytorch_lightning.loggers import MLFlowLogger
 from pytorch_lightning.callbacks import (
     ModelCheckpoint,
@@ -31,6 +31,7 @@ def main(cfg: DictConfig):
 
 
 def train_ocr(cfg: DictConfig):
+    seed_everything(42)
     train_ds = OCRDatasetV4(
         root_dir=f"{cfg.data.path}/train/img",
         alphabet=cfg.ocr.alphabet,

@@ -7,7 +7,7 @@ if platform.system() == "Darwin":
 import hydra
 import torch
 from omegaconf import DictConfig
-from pytorch_lightning import Trainer
+from pytorch_lightning import seed_everything, Trainer
 from pytorch_lightning.loggers import MLFlowLogger
 from pytorch_lightning.callbacks import (
     ModelCheckpoint,
@@ -37,6 +37,7 @@ def ocr_collate_fn(batch):
 
 @hydra.main(config_path="../configs", config_name="ocr_v2", version_base="1.3")
 def main(cfg: DictConfig):
+    seed_everything(42)
     train_ds = OCRDatasetV2(
         root_dir=f"{cfg.data.path}/train/img",
         alphabet=cfg.ocr.alphabet,
