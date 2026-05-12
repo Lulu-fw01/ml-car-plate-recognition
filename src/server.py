@@ -18,6 +18,7 @@ from torchvision import transforms
 from ultralytics import YOLO
 
 from pl_modules.ocr_module_v3 import OCRModuleV3
+from pl_modules.greedy.decode_greedy import decode_greedy
 
 from generated import ml_car_plate_recognition_pb2
 from generated import ml_car_plate_recognition_pb2_grpc
@@ -96,29 +97,28 @@ class MLServicer(
 
         with torch.no_grad():
             logits = self.model_v3.model(tensor)
-            preds = logits.argmax(dim=-1).squeeze(0)
-            probs = torch.softmax(logits, dim=-1).squeeze(0)
+            log_probs = torch.log_softmax(logits, dim=-1)
 
-        chars = []
+        decoded = decode_greedy(self.alphabet, self.pad_idx, log_probs)
+        plate_text = decoded[0] if decoded else ""
+
+        probs = torch.softmax(logits, dim=-1).squeeze(1)
+        preds = logits.argmax(dim=-1).squeeze(1)
+
         confidences = []
         prev = -1
         for i, idx in enumerate(preds):
             idx_item = idx.item()
             if idx_item == prev:
                 continue
-
             if idx_item == self.pad_idx:
                 prev = idx_item
                 continue
-
             if idx_item < len(self.alphabet):
-                chars.append(self.alphabet[idx_item])
                 confidences.append(probs[i, idx_item].item())
-
             prev = idx_item
 
-        plate_text = "".join(chars)
-        avg_confidence = float(np.mean(confidences))
+        avg_confidence = float(np.mean(confidences)) if confidences else 0.0
         return plate_text, avg_confidence
 
     def _save_image(self, img_bytes):
