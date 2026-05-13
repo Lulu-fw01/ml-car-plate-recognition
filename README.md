@@ -22,20 +22,3 @@ download-data
 ```bash
 mlflow ui --host 127.0.0.1 --port 8080
 ```
-
-### Обучение ocr модели
-```bash
-python scripts/train_ocr.py
-```
-
-### Обучение модели детекции номеров.
-```bash
-python scripts/train_detect.py
-```
-
-Вызвать распознование
-```bash
-grpcurl -plaintext \
-  -d '{"image_link": "image/link"}' \
-  localhost:50051 ml.MLCarPlateRecognitionService/RecognizeCarPlate
-```
