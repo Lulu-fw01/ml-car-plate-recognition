@@ -210,8 +210,8 @@ __marimo__/
 /data
 /outputs
 /runs
-/mlruns
 /mlartifacts
+/mlruns
 /debug_images
 /benchmark_results
 

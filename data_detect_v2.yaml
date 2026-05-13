@@ -1,0 +1,5 @@
+path: /Users/lumarkov/git/luka/ml-car-plate-recognition/data/raw/detect
+train: train/images
+val: val/images
+nc: 1
+names: ['license_plate']

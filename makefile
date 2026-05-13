@@ -44,3 +44,6 @@ clean:
 
 benchmark:
 	uv run --extra benchmark python scripts/benchmark_ocr.py
+
+benchmark-d:
+	uv run --extra benchmark python scripts/benchmark_detect.py

@@ -3,17 +3,22 @@ import json
 import time
 from pathlib import Path
 
+import cv2
 import numpy as np
 import torch
 from PIL import Image
 from torchvision import transforms
 from tqdm import tqdm
 
+from easyocr import Reader
+from paddleocr import PaddleOCR
+
 from utils.cer import get_cer
 from utils.save_errors import save_errors_to_file
 from utils.confusion_matrix import update_confusion_matrix, save_to_csv, save_to_png
 from utils.prf import calculate_prf
 from utils.accuracy import calculate_per_position_accuracy
+from utils.postprocess import postprocess_plate_text
 
 sys.path.append("src")
 
@@ -25,6 +30,7 @@ from pl_modules.ocr_module_v4 import OCRModuleV4
 
 ALPHABET_V1_V2_V3 = "0123456789ABEKMHOPCTYX_"
 ALPHABET_V4 = "0123456789ABEKMHOPCTYX"
+ALLOWED_ALPHABET = set("0123456789ABEKMHOPCTYX")
 LABELS_V1_V2_V3 = list(ALPHABET_V1_V2_V3) + ["<DEL>", "<INS>"]
 LABELS_V4 = list(ALPHABET_V4) + ["<SOS>", "<EOS>", "<PAD>"]
 BLANK_IDX = len(ALPHABET_V1_V2_V3) - 1
@@ -89,6 +95,8 @@ class OCRBenchmark:
         self.model_v2 = None
         self.model_v3 = None
         self.model_v4 = None
+        self.easy_reader = None
+        self.paddle_reader = None
 
     def load_model_v1(self):
         self.model_v1 = OCRModuleV1.load_from_checkpoint(
@@ -122,6 +130,21 @@ class OCRBenchmark:
         )
         self.model_v4.load_state_dict(checkpoint["state_dict"])
         print(f"OCR v4 model loaded from {MODEL_V4_PATH}")
+
+    def load_easyocr(self):
+        use_gpu = torch.cuda.is_available()
+        self.easy_reader = Reader(["en"], gpu=use_gpu)
+        print("EasyOCR model loaded")
+
+    def load_paddleocr(self):
+        self.paddle_reader = PaddleOCR(
+            # use_angle_cls=True,
+            lang="en",
+            use_doc_orientation_classify=False,
+            use_textline_orientation=False,
+            text_detection_model_name=None,
+        )
+        print("PaddleOCR model loaded")
 
     def predict_v1(self, tensor: torch.Tensor) -> str:
         self.model_v1.eval()
@@ -193,11 +216,45 @@ class OCRBenchmark:
 
         return self.model_v4.tokens_to_string(tokens)[0]
 
+    def predict_easyocr(self, img_array: np.ndarray) -> str:
+        results = self.easy_reader.readtext(
+            img_array, detail=0, allowlist="0123456789ABEKMHOPCTYX"
+        )
+        raw_text = "".join(results).replace(" ", "").upper()
+        return postprocess_plate_text(raw_text)
+
+    def predict_paddleocr(self, img_array: np.ndarray) -> str:
+        if len(img_array.shape) == 2:
+            img_array = cv2.cvtColor(img_array, cv2.COLOR_GRAY2RGB)
+        else:
+            img_array = cv2.cvtColor(img_array, cv2.COLOR_BGR2RGB)
+        results = self.paddle_reader.predict(img_array)
+        if not results or not results[0].get("rec_texts"):
+            return ""
+        raw_text = "".join(results[0]["rec_texts"]).replace(" ", "").upper()
+        return postprocess_plate_text(raw_text)
+
+    def add_padding(self, img, padding_size=10, color=[255, 255, 255]):
+        padded_img = cv2.copyMakeBorder(
+            img,
+            padding_size,
+            padding_size,
+            padding_size,
+            padding_size,
+            cv2.BORDER_CONSTANT,
+            value=color,
+        )
+        return padded_img
+
     def benchmark_model(self, model_name: str) -> dict:
         predict_fn = getattr(self, f"predict_{model_name}")
-        transform_fn = getattr(self, f"transform_{model_name}")
 
-        labels = LABELS_V1_V2_V3 if model_name in ["v1", "v2", "v3"] else LABELS_V4
+        is_image_model = model_name in ["easyocr", "paddleocr"]
+        if is_image_model:
+            labels = LABELS_V1_V2_V3
+        else:
+            transform_fn = getattr(self, f"transform_{model_name}")
+            labels = LABELS_V1_V2_V3 if model_name in ["v1", "v2", "v3"] else LABELS_V4
 
         predictions = []
         ground_truths = []
@@ -210,18 +267,34 @@ class OCRBenchmark:
         total_n = 0
 
         for i in range(min(10, len(self.img_paths))):
-            img = Image.open(self.img_paths[i]).convert("L")
-            tensor = transform_fn(img).unsqueeze(0)
-            predict_fn(tensor)
+            if is_image_model:
+                img = cv2.imread(self.img_paths[i])
+                if model_name == "easyocr":
+                    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+                if model_name == "paddleocr":
+                    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                predict_fn(img)
+            else:
+                img = Image.open(self.img_paths[i]).convert("L")
+                tensor = transform_fn(img).unsqueeze(0)
+                predict_fn(tensor)
 
         print(f"Benchmarking {model_name} on {len(self.img_paths)} images")
         start_time = time.time()
 
         for img_path in tqdm(self.img_paths, desc=f"Running {model_name}"):
-            img = Image.open(img_path).convert("L")
-            tensor = transform_fn(img).unsqueeze(0)
+            if is_image_model:
+                img = cv2.imread(img_path)
+                if model_name == "easyocr":
+                    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+                if model_name == "paddleocr":
+                    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                pred = predict_fn(img)
+            else:
+                img = Image.open(img_path).convert("L")
+                tensor = transform_fn(img).unsqueeze(0)
+                pred = predict_fn(tensor)
 
-            pred = predict_fn(tensor)
             target = img_path.stem.upper()
 
             predictions.append(pred)
@@ -288,7 +361,9 @@ class OCRBenchmark:
             "v1": self.benchmark_model("v1"),
             "v2": self.benchmark_model("v2"),
             "v3": self.benchmark_model("v3"),
-            "v4": self.benchmark_model("v4"),
+            # "v4": self.benchmark_model("v4"),
+            "easyocr": self.benchmark_model("easyocr"),
+            "paddleocr": self.benchmark_model("paddleocr"),
         }
         return results
 
@@ -385,6 +460,8 @@ def main():
     benchmark.load_model_v2()
     benchmark.load_model_v3()
     benchmark.load_model_v4()
+    benchmark.load_easyocr()
+    benchmark.load_paddleocr()
 
     results = benchmark.run_comparison()
 

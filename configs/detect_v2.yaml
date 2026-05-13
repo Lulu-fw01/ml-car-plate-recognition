@@ -1,0 +1,40 @@
+defaults:
+  - _self_
+
+task: "detect_v2"
+
+data:
+  path: "data/raw/detect"
+
+model:
+  name: "yolov10s"
+  imgsz: 320
+  pretrained: true
+
+trainer:
+  max_epochs: 30
+  batch_size: 32
+  num_workers: 0
+  patience: 10
+  amp: true
+  сlose_mosaic: 10
+  device: "mps"
+
+augmentations:
+  hsv_h: 0.015
+  hsv_s: 0.7
+  hsv_v: 0.4
+  degrees: 5.0
+  translate: 0.05
+  scale: 0.2
+  shear: 2.0
+  perspective: 0.0
+  flipud: 0.0
+  fliplr: 0.5
+  mosaic: 1.0
+  # mixup: 0.0
+
+logging:
+  mlflow:
+    tracking_uri: "http://127.0.0.1:8080"
+    experiment_name: "detect-v2"
